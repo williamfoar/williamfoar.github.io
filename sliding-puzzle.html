@@ -1,0 +1,580 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Woodslide — 3×3 Puzzle</title>
+  <style>
+    :root{
+      --bg1:#12100e; --bg2:#1e1a16;
+      --panel:rgba(255,255,255,.045);
+      --panel-border:rgba(255,255,255,.09);
+      --text:#efe9e1; --muted:#a89d8e;
+      --accent:#e0a458; --accent2:#c47f3a;
+      --tile-size:110px; --gap:10px;
+      --anim:220ms;
+      /* walnut default */
+      --wood-a:#6e4a2c; --wood-b:#4a2f1a; --wood-c:#8a5f38; --wood-text:#f7ead6;
+      --radius:14px;
+    }
+    [data-wood="oak"]   { --wood-a:#c49a6c; --wood-b:#9a744c; --wood-c:#dcb586; --wood-text:#3b2a18; }
+    [data-wood="cherry"]{ --wood-a:#8e4a3a; --wood-b:#6a3226; --wood-c:#a85e48; --wood-text:#ffe9dc; }
+    [data-wood="ebony"] { --wood-a:#3a3230; --wood-b:#241f1e; --wood-c:#514540; --wood-text:#e8ded4; }
+  
+    *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;}
+    body{
+      font-family:"Segoe UI", system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(1200px 800px at 20% -10%, #2b241d 0%, transparent 60%),
+        radial-gradient(1000px 700px at 110% 110%, #26201a 0%, transparent 55%),
+        linear-gradient(160deg, var(--bg2), var(--bg1));
+      color:var(--text);
+      display:flex; align-items:center; justify-content:center;
+      min-height:100%;
+      padding:24px;
+      user-select:none;
+    }
+  
+    .app{width:min(440px, 96vw); display:flex; flex-direction:column; gap:18px;}
+  
+    /* ── Header ── */
+    header{display:flex; align-items:center; justify-content:space-between;}
+    .brand h1{font-size:1.35rem; font-weight:600; letter-spacing:.4px;}
+    .brand h1 span{color:var(--accent);}
+    .brand p{font-size:.78rem; color:var(--muted); margin-top:2px; letter-spacing:.6px; text-transform:uppercase;}
+    .icon-btn{
+      width:42px; height:42px; border-radius:12px; border:1px solid var(--panel-border);
+      background:var(--panel); color:var(--text); cursor:pointer;
+      display:grid; place-items:center; transition:all .18s ease;
+      backdrop-filter:blur(6px);
+    }
+    .icon-btn:hover{background:rgba(255,255,255,.09); transform:translateY(-1px);}
+    .icon-btn svg{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
+  
+    /* ── Stats ── */
+    .stats{display:flex; gap:10px;}
+    .stat{
+      flex:1; background:var(--panel); border:1px solid var(--panel-border);
+      border-radius:12px; padding:10px 14px; backdrop-filter:blur(6px);
+    }
+    .stat .label{font-size:.68rem; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted);}
+    .stat .value{font-size:1.15rem; font-weight:600; font-variant-numeric:tabular-nums; margin-top:2px;}
+  
+    /* ── Board ── */
+    .board-wrap{
+      position:relative;
+      padding:14px;
+      border-radius:calc(var(--radius) + 8px);
+      background:linear-gradient(150deg, #2c241c, #191410);
+      border:1px solid rgba(255,255,255,.07);
+      box-shadow:0 24px 60px -18px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .board{
+      position:relative;
+      width:calc(var(--tile-size)*3 + var(--gap)*2);
+      height:calc(var(--tile-size)*3 + var(--gap)*2);
+      margin:0 auto;
+      border-radius:var(--radius);
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 2px, transparent 2px 22px),
+        linear-gradient(140deg, #0e0b09, #171310);
+      box-shadow:inset 0 3px 14px rgba(0,0,0,.8);
+    }
+    .cell-shadow{
+      position:absolute; width:var(--tile-size); height:var(--tile-size);
+      border-radius:calc(var(--radius) - 4px);
+      box-shadow:inset 0 2px 8px rgba(0,0,0,.55);
+      background:rgba(0,0,0,.25);
+    }
+  
+    .tile{
+      position:absolute; width:var(--tile-size); height:var(--tile-size);
+      border-radius:calc(var(--radius) - 4px);
+      display:grid; place-items:center;
+      font-size:2.1rem; font-weight:700; color:var(--wood-text);
+      text-shadow:0 2px 4px rgba(0,0,0,.45);
+      cursor:pointer;
+      transition:transform var(--anim) cubic-bezier(.25,.9,.35,1.15), filter .15s ease;
+      background-blend-mode:overlay, normal, normal;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.011 0.13' numOctaves='4' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+        repeating-linear-gradient(88deg, rgba(0,0,0,.10) 0 2px, transparent 2px 16px, rgba(0,0,0,.05) 16px 18px, transparent 18px 34px),
+        linear-gradient(135deg, var(--wood-c) 0%, var(--wood-a) 45%, var(--wood-b) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.28),
+        inset 0 -3px 6px rgba(0,0,0,.35),
+        inset 2px 0 4px rgba(255,255,255,.08),
+        inset -2px 0 4px rgba(0,0,0,.2),
+        0 6px 14px -4px rgba(0,0,0,.6);
+    }
+    .tile:hover{filter:brightness(1.1);}
+    .tile:active{filter:brightness(.95);}
+    .tile.no-num{color:transparent; text-shadow:none;}
+  
+    .board.won .tile{animation:winPulse 1.2s ease both;}
+    @keyframes winPulse{
+      0%{filter:brightness(1);}
+      30%{filter:brightness(1.45) saturate(1.3);}
+      100%{filter:brightness(1.08);}
+    }
+  
+    /* ── Controls ── */
+    .controls{display:flex; gap:10px;}
+    .btn{
+      flex:1; padding:13px 0; border-radius:12px; border:1px solid var(--panel-border);
+      background:var(--panel); color:var(--text);
+      font-size:.92rem; font-weight:600; letter-spacing:.4px; cursor:pointer;
+      transition:all .18s ease; backdrop-filter:blur(6px);
+      display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .btn svg{width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+    .btn:hover{background:rgba(255,255,255,.1); transform:translateY(-1px);}
+    .btn.primary{
+      background:linear-gradient(140deg, var(--accent), var(--accent2));
+      color:#241605; border-color:transparent;
+      box-shadow:0 8px 20px -8px rgba(224,164,88,.55);
+    }
+    .btn.primary:hover{filter:brightness(1.07);}
+    .btn:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+  
+    /* ── Toast ── */
+    .toast{
+      position:fixed; left:50%; bottom:28px; transform:translate(-50%, 80px);
+      background:rgba(30,25,20,.92); border:1px solid var(--panel-border);
+      color:var(--text); padding:12px 22px; border-radius:12px; font-size:.9rem;
+      backdrop-filter:blur(8px); transition:transform .35s cubic-bezier(.2,.9,.3,1.2), opacity .3s;
+      opacity:0; pointer-events:none; box-shadow:0 12px 30px rgba(0,0,0,.5); z-index:50;
+    }
+    .toast.show{transform:translate(-50%,0); opacity:1;}
+    .toast b{color:var(--accent);}
+  
+    /* ── Settings modal ── */
+    .overlay{
+      position:fixed; inset:0; background:rgba(8,6,5,.6); backdrop-filter:blur(4px);
+      display:grid; place-items:center; opacity:0; pointer-events:none; transition:opacity .22s ease; z-index:40;
+    }
+    .overlay.open{opacity:1; pointer-events:auto;}
+    .modal{
+      width:min(380px, 92vw); border-radius:18px; padding:24px;
+      background:linear-gradient(160deg, #262019, #17120e);
+      border:1px solid rgba(255,255,255,.1);
+      box-shadow:0 30px 70px rgba(0,0,0,.7);
+      transform:translateY(14px) scale(.97); transition:transform .25s cubic-bezier(.2,.9,.3,1.15);
+    }
+    .overlay.open .modal{transform:translateY(0) scale(1);}
+    .modal h2{font-size:1.05rem; font-weight:600; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between;}
+    .modal h2 button{background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer; line-height:1;}
+    .modal h2 button:hover{color:var(--text);}
+    .setting{margin-bottom:18px;}
+    .setting > .s-label{font-size:.72rem; letter-spacing:1.1px; text-transform:uppercase; color:var(--muted); margin-bottom:8px;}
+    .seg{display:flex; gap:6px;}
+    .seg button{
+      flex:1; padding:9px 0; border-radius:10px; border:1px solid var(--panel-border);
+      background:var(--panel); color:var(--muted); font-size:.8rem; font-weight:600; cursor:pointer; transition:all .15s;
+    }
+    .seg button.active{background:linear-gradient(140deg,var(--accent),var(--accent2)); color:#241605; border-color:transparent;}
+    .swatches{display:flex; gap:10px;}
+    .swatch{
+      flex:1; height:44px; border-radius:10px; cursor:pointer; border:2px solid transparent; transition:all .15s;
+      display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px;
+      font-size:.62rem; letter-spacing:.6px; text-transform:uppercase; font-weight:700;
+      text-shadow:0 1px 2px rgba(0,0,0,.6); color:#fff;
+    }
+    .swatch.active{border-color:var(--accent); box-shadow:0 0 0 3px rgba(224,164,88,.25);}
+    .sw-walnut{background:linear-gradient(135deg,#8a5f38,#4a2f1a);}
+    .sw-oak{background:linear-gradient(135deg,#dcb586,#9a744c); color:#3b2a18; text-shadow:none;}
+    .sw-cherry{background:linear-gradient(135deg,#a85e48,#6a3226);}
+    .sw-ebony{background:linear-gradient(135deg,#514540,#241f1e);}
+    .toggle-row{display:flex; align-items:center; justify-content:space-between; padding:4px 0;}
+    .toggle-row .t-name{font-size:.9rem;}
+    .switch{position:relative; width:46px; height:26px;}
+    .switch input{display:none;}
+    .switch .track{
+      position:absolute; inset:0; border-radius:20px; background:rgba(255,255,255,.12);
+      transition:background .2s; cursor:pointer;
+    }
+    .switch .track::after{
+      content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
+      background:#cfc4b5; transition:all .2s cubic-bezier(.2,.9,.3,1.3);
+    }
+    .switch input:checked + .track{background:linear-gradient(140deg,var(--accent),var(--accent2));}
+    .switch input:checked + .track::after{left:23px; background:#241605;}
+  
+    @media (max-width:420px){ :root{--tile-size:86px; --gap:8px;} .tile{font-size:1.7rem;} }
+  </style>
+  </head>
+  <body data-wood="walnut">
+  <div class="app">
+    <header>
+      <div class="brand">
+        <h1>Wood<span>slide</span></h1>
+        <p>3 × 3 sliding puzzle</p>
+      </div>
+      <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.08A1.7 1.7 0 0 0 10.12 3V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.08a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51.88z"/></svg>
+      </button>
+    </header>
+  
+    <div class="stats">
+      <div class="stat"><div class="label">Moves</div><div class="value" id="moves">0</div></div>
+      <div class="stat"><div class="label">Time</div><div class="value" id="time">0:00</div></div>
+      <div class="stat"><div class="label">Best</div><div class="value" id="best">—</div></div>
+    </div>
+  
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+  
+    <div class="controls">
+      <button class="btn primary" id="shuffleBtn">
+        <svg viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="m4 4 5 5"/></svg>
+        Shuffle
+      </button>
+      <button class="btn" id="solveBtn">
+        <svg viewBox="0 0 24 24"><path d="M9.66 4.5 11.3 2h1.4l1.64 2.5 2.94-.6 1 1-.6 2.94L20.18 9.5v1.4l-2.5 1.64"/><path d="m2 22 5-2 11-11-3-3L4 17z"/><path d="m13 8 3 3"/></svg>
+        Solve
+      </button>
+    </div>
+  </div>
+  
+  <div class="toast" id="toast"></div>
+  
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>Settings <button id="closeSettings" aria-label="Close">✕</button></h2>
+  
+      <div class="setting">
+        <div class="s-label">Wood finish</div>
+        <div class="swatches" id="woodSwatches">
+          <div class="swatch sw-walnut active" data-wood="walnut">Walnut</div>
+          <div class="swatch sw-oak" data-wood="oak">Oak</div>
+          <div class="swatch sw-cherry" data-wood="cherry">Cherry</div>
+          <div class="swatch sw-ebony" data-wood="ebony">Ebony</div>
+        </div>
+      </div>
+  
+      <div class="setting">
+        <div class="s-label">Shuffle difficulty</div>
+        <div class="seg" id="difficultySeg">
+          <button data-d="easy">Easy</button>
+          <button data-d="medium" class="active">Medium</button>
+          <button data-d="hard">Hard</button>
+        </div>
+      </div>
+  
+      <div class="setting">
+        <div class="s-label">Slide speed</div>
+        <div class="seg" id="speedSeg">
+          <button data-s="slow">Relaxed</button>
+          <button data-s="normal" class="active">Normal</button>
+          <button data-s="fast">Snappy</button>
+        </div>
+      </div>
+  
+      <div class="setting toggle-row">
+        <span class="t-name">Show numbers</span>
+        <label class="switch"><input type="checkbox" id="numToggle" checked><span class="track"></span></label>
+      </div>
+      <div class="setting toggle-row" style="margin-bottom:4px;">
+        <span class="t-name">Sound effects</span>
+        <label class="switch"><input type="checkbox" id="soundToggle" checked><span class="track"></span></label>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+  (() => {
+    const SOLVED = [1,2,3,4,5,6,7,8,0];
+    const board = document.getElementById('board');
+    const movesEl = document.getElementById('moves');
+    const timeEl = document.getElementById('time');
+    const bestEl = document.getElementById('best');
+    const toast = document.getElementById('toast');
+    const solveBtn = document.getElementById('solveBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+  
+    let state = SOLVED.slice();
+    let moves = 0, seconds = 0, timerId = null, started = false, solving = false;
+    const tiles = {}; // number -> element
+  
+    // ── Settings ────────────────────────────────────────────────
+    const defaults = { wood:'walnut', difficulty:'medium', speed:'normal', numbers:true, sound:true };
+    let settings = {...defaults, ...(JSON.parse(localStorage.getItem('woodslide-settings') || '{}'))};
+    const DIFF_MOVES = { easy:25, medium:80, hard:200 };
+    const SPEED_MS  = { slow:340, normal:220, fast:120 };
+  
+    function saveSettings(){ localStorage.setItem('woodslide-settings', JSON.stringify(settings)); }
+    function applySettings(){
+      document.body.dataset.wood = settings.wood;
+      document.documentElement.style.setProperty('--anim', SPEED_MS[settings.speed] + 'ms');
+      document.querySelectorAll('#woodSwatches .swatch').forEach(s => s.classList.toggle('active', s.dataset.wood === settings.wood));
+      document.querySelectorAll('#difficultySeg button').forEach(b => b.classList.toggle('active', b.dataset.d === settings.difficulty));
+      document.querySelectorAll('#speedSeg button').forEach(b => b.classList.toggle('active', b.dataset.s === settings.speed));
+      document.getElementById('numToggle').checked = settings.numbers;
+      document.getElementById('soundToggle').checked = settings.sound;
+      Object.values(tiles).forEach(t => t.classList.toggle('no-num', !settings.numbers));
+    }
+  
+    // ── Sound (tiny WebAudio click) ─────────────────────────────
+    let audioCtx = null;
+    function click(freq = 900){
+      if(!settings.sound) return;
+      try{
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = 'triangle'; o.frequency.value = freq + Math.random()*120;
+        g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.09);
+        o.connect(g).connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + 0.1);
+      }catch(e){}
+    }
+  
+    // ── Geometry ────────────────────────────────────────────────
+    function cellXY(i){
+      const size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-size'));
+      const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap'));
+      return { x: (i % 3) * (size + gap), y: Math.floor(i / 3) * (size + gap) };
+    }
+  
+    function buildBoard(){
+      board.innerHTML = '';
+      for(let i = 0; i < 9; i++){
+        const sh = document.createElement('div');
+        sh.className = 'cell-shadow';
+        const {x, y} = cellXY(i);
+        sh.style.transform = `translate(${x}px, ${y}px)`;
+        board.appendChild(sh);
+      }
+      for(let n = 1; n <= 8; n++){
+        const t = document.createElement('div');
+        t.className = 'tile';
+        t.textContent = n;
+        // vary the grain per tile
+        t.style.backgroundPosition = `${(n*37)%120}px ${(n*53)%120}px, 0 0, 0 0`;
+        t.addEventListener('click', () => { if(!solving) tryMove(n, true); });
+        tiles[n] = t;
+        board.appendChild(t);
+      }
+      render();
+    }
+  
+    function render(){
+      state.forEach((n, i) => {
+        if(n === 0) return;
+        const {x, y} = cellXY(i);
+        tiles[n].style.transform = `translate(${x}px, ${y}px)`;
+      });
+    }
+  
+    // ── Moves ───────────────────────────────────────────────────
+    function neighbors(i){
+      const r = Math.floor(i/3), c = i%3, out = [];
+      if(r > 0) out.push(i-3); if(r < 2) out.push(i+3);
+      if(c > 0) out.push(i-1); if(c < 2) out.push(i+1);
+      return out;
+    }
+  
+    function tryMove(n, user){
+      const ti = state.indexOf(n), ei = state.indexOf(0);
+      if(!neighbors(ei).includes(ti)) return false;
+      [state[ti], state[ei]] = [state[ei], state[ti]];
+      render();
+      click(user ? 850 : 650);
+      if(user){
+        if(!started){ startTimer(); started = true; }
+        moves++; movesEl.textContent = moves;
+        if(isSolved()) win();
+      }
+      return true;
+    }
+  
+    function isSolved(){ return state.every((v, i) => v === SOLVED[i]); }
+  
+    // ── Timer / stats ───────────────────────────────────────────
+    function fmt(s){ return Math.floor(s/60) + ':' + String(s%60).padStart(2, '0'); }
+    function startTimer(){
+      stopTimer();
+      timerId = setInterval(() => { seconds++; timeEl.textContent = fmt(seconds); }, 1000);
+    }
+    function stopTimer(){ if(timerId){ clearInterval(timerId); timerId = null; } }
+    function resetStats(){
+      stopTimer(); moves = 0; seconds = 0; started = false;
+      movesEl.textContent = '0'; timeEl.textContent = '0:00';
+    }
+    function loadBest(){
+      const b = localStorage.getItem('woodslide-best-' + settings.difficulty);
+      bestEl.textContent = b ? b + ' mv' : '—';
+    }
+  
+    // ── Shuffle ─────────────────────────────────────────────────
+    function shuffle(){
+      if(solving) return;
+      board.classList.remove('won');
+      let last = -1;
+      const n = DIFF_MOVES[settings.difficulty];
+      for(let k = 0; k < n; k++){
+        const ei = state.indexOf(0);
+        const opts = neighbors(ei).filter(i => i !== last);
+        const pick = opts[Math.floor(Math.random() * opts.length)];
+        last = ei;
+        [state[ei], state[pick]] = [state[pick], state[ei]];
+      }
+      if(isSolved()) return shuffle();
+      render();
+      resetStats();
+      showToast('Board shuffled — good luck! 🌰');
+    }
+  
+    // ── Win ─────────────────────────────────────────────────────
+    function win(){
+      stopTimer();
+      board.classList.add('won');
+      click(1300); setTimeout(() => click(1600), 120); setTimeout(() => click(2000), 240);
+      const key = 'woodslide-best-' + settings.difficulty;
+      const prev = parseInt(localStorage.getItem(key) || '1e9');
+      let msg = `Solved in <b>${moves}</b> moves · <b>${fmt(seconds)}</b> 🎉`;
+      if(moves > 0 && moves < prev){
+        localStorage.setItem(key, moves);
+        msg += ' · New best!';
+      }
+      loadBest();
+      showToast(msg, 4200);
+    }
+  
+    // ── Solver (A* with Manhattan distance) ─────────────────────
+    function manhattan(s){
+      let d = 0;
+      for(let i = 0; i < 9; i++){
+        const v = s[i]; if(v === 0) continue;
+        const gi = v - 1;
+        d += Math.abs(Math.floor(i/3) - Math.floor(gi/3)) + Math.abs(i%3 - gi%3);
+      }
+      return d;
+    }
+  
+    function aStar(start){
+      const key = s => s.join('');
+      const goal = SOLVED.join('');
+      if(key(start) === goal) return [];
+      // simple binary heap
+      const heap = [];
+      const push = n => { heap.push(n); let i = heap.length-1;
+        while(i > 0){ const p = (i-1)>>1; if(heap[p].f <= heap[i].f) break; [heap[p],heap[i]]=[heap[i],heap[p]]; i = p; } };
+      const pop = () => { const top = heap[0], end = heap.pop();
+        if(heap.length){ heap[0] = end; let i = 0;
+          for(;;){ let l = 2*i+1, r = l+1, m = i;
+            if(l < heap.length && heap[l].f < heap[m].f) m = l;
+            if(r < heap.length && heap[r].f < heap[m].f) m = r;
+            if(m === i) break; [heap[m],heap[i]]=[heap[i],heap[m]]; i = m; } }
+        return top; };
+  
+      const gScore = new Map();
+      gScore.set(key(start), 0);
+      push({ s:start, g:0, f:manhattan(start), path:[] });
+  
+      while(heap.length){
+        const cur = pop();
+        const ck = key(cur.s);
+        if(ck === goal) return cur.path;
+        if(cur.g > (gScore.get(ck) ?? Infinity)) continue;
+        const ei = cur.s.indexOf(0);
+        for(const ni of neighbors(ei)){
+          const next = cur.s.slice();
+          [next[ei], next[ni]] = [next[ni], next[ei]];
+          const nk = next.join('');
+          const g = cur.g + 1;
+          if(g < (gScore.get(nk) ?? Infinity)){
+            gScore.set(nk, g);
+            push({ s:next, g, f:g + manhattan(next), path:cur.path.concat(next[ei]) });
+          }
+        }
+      }
+      return null;
+    }
+  
+    async function solve(){
+      if(solving || isSolved()){ if(isSolved()) showToast('Already solved! ✨'); return; }
+      solving = true;
+      solveBtn.disabled = true; shuffleBtn.disabled = true;
+      stopTimer();
+      showToast('Thinking… 🧠');
+      await new Promise(r => setTimeout(r, 30)); // let toast paint
+      const path = aStar(state.slice());
+      if(!path){ showToast('Hmm, no solution found.'); solving = false; solveBtn.disabled = shuffleBtn.disabled = false; return; }
+      showToast(`Watch closely — ${path.length} optimal moves ▶`);
+      const step = SPEED_MS[settings.speed] + 70;
+      for(const tile of path){
+        tryMove(tile, false);
+        await new Promise(r => setTimeout(r, step));
+      }
+      solving = false;
+      solveBtn.disabled = shuffleBtn.disabled = false;
+      board.classList.add('won');
+      resetStats();
+      showToast('Solved for you — hit <b>Shuffle</b> for a fresh board 🪵');
+    }
+  
+    // ── Toast ───────────────────────────────────────────────────
+    let toastTimer = null;
+    function showToast(html, ms = 2600){
+      toast.innerHTML = html;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), ms);
+    }
+  
+    // ── Keyboard ────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      if(solving) return;
+      const ei = state.indexOf(0);
+      let ti = -1;
+      // arrow = direction the TILE slides
+      if(e.key === 'ArrowUp'    && ei < 6) ti = ei + 3;
+      if(e.key === 'ArrowDown'  && ei > 2) ti = ei - 3;
+      if(e.key === 'ArrowLeft'  && ei % 3 < 2) ti = ei + 1;
+      if(e.key === 'ArrowRight' && ei % 3 > 0) ti = ei - 1;
+      if(ti >= 0){ e.preventDefault(); tryMove(state[ti], true); }
+    });
+  
+    // ── Settings UI wiring ──────────────────────────────────────
+    const overlay = document.getElementById('overlay');
+    document.getElementById('settingsBtn').addEventListener('click', () => overlay.classList.add('open'));
+    document.getElementById('closeSettings').addEventListener('click', () => overlay.classList.remove('open'));
+    overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('open'); });
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') overlay.classList.remove('open'); });
+  
+    document.getElementById('woodSwatches').addEventListener('click', e => {
+      const s = e.target.closest('.swatch'); if(!s) return;
+      settings.wood = s.dataset.wood; saveSettings(); applySettings(); click(700);
+    });
+    document.getElementById('difficultySeg').addEventListener('click', e => {
+      const b = e.target.closest('button'); if(!b) return;
+      settings.difficulty = b.dataset.d; saveSettings(); applySettings(); loadBest();
+    });
+    document.getElementById('speedSeg').addEventListener('click', e => {
+      const b = e.target.closest('button'); if(!b) return;
+      settings.speed = b.dataset.s; saveSettings(); applySettings();
+    });
+    document.getElementById('numToggle').addEventListener('change', e => {
+      settings.numbers = e.target.checked; saveSettings(); applySettings();
+    });
+    document.getElementById('soundToggle').addEventListener('change', e => {
+      settings.sound = e.target.checked; saveSettings();
+    });
+  
+    // ── Buttons ─────────────────────────────────────────────────
+    shuffleBtn.addEventListener('click', shuffle);
+    solveBtn.addEventListener('click', solve);
+    window.addEventListener('resize', render);
+  
+    // ── Go ──────────────────────────────────────────────────────
+    buildBoard();
+    applySettings();
+    loadBest();
+    shuffle();
+  })();
+  </script>
+  </body>
+  </html>

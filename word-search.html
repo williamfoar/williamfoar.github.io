@@ -1,0 +1,662 @@
+  <!doctype html>
+  <html lang="en">
+  <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Word Search</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --panel: rgba(255, 255, 255, 0.045);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text: #e8ecf3;
+      --muted: rgba(232, 236, 243, 0.55);
+      --accent: #7c6cff;
+      --accent-2: #4ecdc4;
+      --cell-size: 42px;
+      --radius: 18px;
+    }
+  
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+    html, body { height: 100%; }
+  
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(1000px 600px at 85% -10%, rgba(124, 108, 255, 0.18), transparent 60%),
+        radial-gradient(900px 600px at -10% 110%, rgba(78, 205, 196, 0.12), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      -webkit-tap-highlight-color: transparent;
+    }
+  
+    .app {
+      width: 100%;
+      max-width: 980px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+  
+    /* ---------- Header ---------- */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+  
+    .brand h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #ffffff, #b9b0ff 60%, #7ee8e0);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  
+    .brand .theme-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .brand .theme-label span { color: var(--accent-2); font-weight: 600; }
+  
+    .hud {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  
+    .chip {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+    }
+    .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 8px var(--accent-2); }
+    .chip .dot.purple { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  
+    select, .btn {
+      appearance: none;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s, background 0.2s;
+      backdrop-filter: blur(8px);
+    }
+    select:hover, .btn:hover { border-color: rgba(255,255,255,0.25); }
+    .btn:active { transform: scale(0.96); }
+    select option { background: #161a24; color: var(--text); }
+  
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #5a49e8);
+      border: none;
+      font-weight: 600;
+      box-shadow: 0 4px 18px rgba(124, 108, 255, 0.35);
+    }
+    .btn.primary:hover { filter: brightness(1.1); }
+  
+    /* ---------- Layout ---------- */
+    .game {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 250px;
+      gap: 18px;
+      align-items: start;
+    }
+  
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(10px);
+    }
+  
+    /* ---------- Board ---------- */
+    .board-wrap {
+      padding: 18px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+  
+    #board {
+      display: grid;
+      gap: 4px;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      position: relative;
+    }
+  
+    .cell {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--cell-size) * 0.42);
+      font-weight: 600;
+      border-radius: 10px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background 0.15s, transform 0.15s, color 0.15s, box-shadow 0.15s;
+      position: relative;
+      z-index: 1;
+      cursor: pointer;
+    }
+  
+    .cell.selecting {
+      background: rgba(124, 108, 255, 0.35);
+      border-color: rgba(124, 108, 255, 0.7);
+      color: #fff;
+      transform: scale(1.08);
+      box-shadow: 0 0 14px rgba(124, 108, 255, 0.4);
+      z-index: 2;
+    }
+  
+    .cell.found {
+      color: #fff;
+      border-color: transparent;
+    }
+  
+    .cell.pop { animation: pop 0.35s ease; }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.25); }
+      100% { transform: scale(1); }
+    }
+  
+    /* ---------- Word list ---------- */
+    .sidebar {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+  
+    .sidebar h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+  
+    .progress-track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.07);
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  
+    .words {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+  
+    .word {
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: var(--text);
+      transition: all 0.3s;
+    }
+  
+    .word.found {
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+      opacity: 0.85;
+      color: #fff;
+      border-color: transparent;
+      transform: scale(0.97);
+    }
+  
+    /* ---------- Win overlay ---------- */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 16, 0.75);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s;
+      z-index: 50;
+    }
+    .overlay.show { opacity: 1; pointer-events: auto; }
+  
+    .win-card {
+      background: rgba(22, 26, 36, 0.95);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      padding: 44px 56px;
+      text-align: center;
+      transform: translateY(16px) scale(0.95);
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    }
+    .overlay.show .win-card { transform: translateY(0) scale(1); }
+  
+    .win-card .emoji { font-size: 52px; }
+    .win-card h2 {
+      font-size: 30px;
+      margin: 10px 0 6px;
+      background: linear-gradient(90deg, #b9b0ff, #7ee8e0);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .win-card p { color: var(--muted); margin-bottom: 22px; font-size: 15px; }
+    .win-card p b { color: var(--text); }
+  
+    #confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 60;
+    }
+  
+    /* ---------- Responsive ---------- */
+    @media (max-width: 780px) {
+      .game { grid-template-columns: 1fr; }
+      :root { --cell-size: min(40px, calc((100vw - 80px) / var(--grid-n, 12))); }
+    }
+  </style>
+  </head>
+  <body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <h1>Word Search</h1>
+        <div class="theme-label">Theme&colon; <span id="themeName">—</span></div>
+      </div>
+      <div class="hud">
+        <div class="chip"><span class="dot"></span><span id="timer">0:00</span></div>
+        <div class="chip"><span class="dot purple"></span><span id="score">0 / 0</span></div>
+        <select id="difficulty" title="Difficulty">
+          <option value="easy">Easy · 10×10</option>
+          <option value="medium" selected>Medium · 12×12</option>
+          <option value="hard">Hard · 14×14</option>
+        </select>
+        <button class="btn primary" id="newGame">New Game</button>
+      </div>
+    </header>
+  
+    <div class="game">
+      <div class="panel board-wrap">
+        <div id="board"></div>
+      </div>
+      <div class="panel sidebar">
+        <h2>Find these words</h2>
+        <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+        <div class="words" id="wordList"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="overlay" id="overlay">
+    <div class="win-card">
+      <div class="emoji">🏆</div>
+      <h2>Puzzle Solved!</h2>
+      <p>You found all <b id="winCount">0</b> words in <b id="winTime">0:00</b></p>
+      <button class="btn primary" id="playAgain">Play Again</button>
+    </div>
+  </div>
+  <canvas id="confetti"></canvas>
+  
+  <script>
+  (() => {
+    "use strict";
+  
+    // ---------- Word themes ----------
+    const THEMES = {
+      "Space":   ["GALAXY","NEBULA","COMET","ORBIT","ROCKET","PLANET","METEOR","COSMOS","SATURN","ECLIPSE","QUASAR","LUNAR","VENUS","PULSAR","GRAVITY","STARDUST"],
+      "Ocean":   ["CORAL","DOLPHIN","TIDE","ANCHOR","SEAWEED","OCTOPUS","LAGOON","PEARL","WHALE","CURRENT","REEF","MARLIN","ABYSS","KELP","SIREN","TRENCH"],
+      "Jungle":  ["JAGUAR","TOUCAN","VINE","CANOPY","ORCHID","PYTHON","MONKEY","BAMBOO","PARROT","LEOPARD","FERN","GIBBON","MACAW","IGUANA","SLOTH","TAPIR"],
+      "Tech":    ["PIXEL","SERVER","CODING","ROBOT","LAPTOP","BROWSER","CURSOR","GADGET","STREAM","BINARY","ROUTER","SCREEN","UPLOAD","CACHE","KERNEL","SYNTAX"],
+      "Food":    ["MANGO","WAFFLE","NOODLE","GARLIC","SUSHI","PRETZEL","TACO","OLIVE","HONEY","BAGEL","RAMEN","PAELLA","GELATO","TRUFFLE","CHILI","SORBET"],
+      "Music":   ["MELODY","RHYTHM","CHORUS","TEMPO","GUITAR","VIOLIN","OCTAVE","BALLAD","ENCORE","VINYL","PIANO","LYRICS","HARMONY","TRUMPET","CADENCE","SONATA"],
+      "Weather": ["THUNDER","BREEZE","CYCLONE","FROST","MONSOON","RAINBOW","DRIZZLE","TORNADO","HUMID","BLIZZARD","SLEET","SUNBEAM","GUST","HAZE","AURORA","STORM"],
+      "Mythology": ["PHOENIX","KRAKEN","GRIFFIN","TITAN","MEDUSA","DRAGON","VALHALLA","SPHINX","PEGASUS","ORACLE","HYDRA","CHIMERA","GOLEM","BANSHEE","WYVERN","DJINN"]
+    };
+  
+    const DIFFICULTY = {
+      easy:   { size: 10, words: 8 },
+      medium: { size: 12, words: 10 },
+      hard:   { size: 14, words: 12 }
+    };
+  
+    const FOUND_COLORS = [
+      ["#7c6cff", "#5a49e8"], ["#4ecdc4", "#2ba39b"], ["#ff6b9d", "#e04a7f"],
+      ["#ffb347", "#e8932a"], ["#5ec8f2", "#2f9fd6"], ["#a3e05e", "#7bbe37"],
+      ["#c792ea", "#a465d6"], ["#ff8a65", "#e5643c"], ["#64ffda", "#26cfa8"],
+      ["#f9e46b", "#dcc22f"], ["#82aaff", "#5479e0"], ["#f78fb3", "#dd6390"]
+    ];
+  
+    const DIRECTIONS = [
+      [0, 1], [1, 0], [1, 1], [-1, 1],
+      [0, -1], [-1, 0], [-1, -1], [1, -1]
+    ];
+  
+    // ---------- State ----------
+    let grid = [];          // 2D array of letters
+    let size = 12;
+    let placedWords = [];   // { word, cells: [[r,c],...], found }
+    let foundCount = 0;
+    let startTime = 0;
+    let timerInterval = null;
+    let finalTime = "0:00";
+    let selecting = false;
+    let selStart = null;    // [r,c]
+    let selCells = [];      // current selection path
+  
+    const $ = (id) => document.getElementById(id);
+    const board = $("board");
+    const rand = (n) => Math.floor(Math.random() * n);
+  
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = rand(i + 1);
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+  
+    // ---------- Grid generation ----------
+    function generate(themeName, config) {
+      size = config.size;
+      grid = Array.from({ length: size }, () => Array(size).fill(""));
+      placedWords = [];
+  
+      const pool = shuffle(THEMES[themeName]).filter(w => w.length <= size);
+      for (const word of pool) {
+        if (placedWords.length >= config.words) break;
+        if (tryPlace(word)) continue;
+      }
+  
+      // Fill blanks with random letters
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if (!grid[r][c]) grid[r][c] = letters[rand(26)];
+        }
+      }
+    }
+  
+    function tryPlace(word) {
+      const attempts = 200;
+      for (let i = 0; i < attempts; i++) {
+        const [dr, dc] = DIRECTIONS[rand(DIRECTIONS.length)];
+        const r0 = rand(size), c0 = rand(size);
+        const rEnd = r0 + dr * (word.length - 1);
+        const cEnd = c0 + dc * (word.length - 1);
+        if (rEnd < 0 || rEnd >= size || cEnd < 0 || cEnd >= size) continue;
+  
+        let ok = true;
+        const cells = [];
+        for (let k = 0; k < word.length; k++) {
+          const r = r0 + dr * k, c = c0 + dc * k;
+          const existing = grid[r][c];
+          if (existing && existing !== word[k]) { ok = false; break; }
+          cells.push([r, c]);
+        }
+        if (!ok) continue;
+  
+        cells.forEach(([r, c], k) => { grid[r][c] = word[k]; });
+        placedWords.push({ word, cells, found: false });
+        return true;
+      }
+      return false;
+    }
+  
+    // ---------- Rendering ----------
+    function render() {
+      board.style.gridTemplateColumns = `repeat(${size}, var(--cell-size))`;
+      document.documentElement.style.setProperty("--grid-n", size);
+      board.innerHTML = "";
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.textContent = grid[r][c];
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          board.appendChild(cell);
+        }
+      }
+  
+      const list = $("wordList");
+      list.innerHTML = "";
+      placedWords.forEach((pw, i) => {
+        const el = document.createElement("div");
+        el.className = "word";
+        el.id = "word-" + i;
+        el.textContent = pw.word;
+        list.appendChild(el);
+      });
+  
+      updateHud();
+    }
+  
+    function cellEl(r, c) {
+      return board.children[r * size + c];
+    }
+  
+    function updateHud() {
+      $("score").textContent = `${foundCount} / ${placedWords.length}`;
+      const pct = placedWords.length ? (foundCount / placedWords.length) * 100 : 0;
+      $("progress").style.width = pct + "%";
+    }
+  
+    // ---------- Timer ----------
+    function fmt(sec) {
+      const m = Math.floor(sec / 60), s = sec % 60;
+      return `${m}:${String(s).padStart(2, "0")}`;
+    }
+  
+    function startTimer() {
+      clearInterval(timerInterval);
+      startTime = Date.now();
+      $("timer").textContent = "0:00";
+      timerInterval = setInterval(() => {
+        $("timer").textContent = fmt(Math.floor((Date.now() - startTime) / 1000));
+      }, 500);
+    }
+  
+    // ---------- Selection ----------
+    function cellFromPoint(x, y) {
+      const el = document.elementFromPoint(x, y);
+      if (el && el.classList.contains("cell")) {
+        return [Number(el.dataset.r), Number(el.dataset.c)];
+      }
+      return null;
+    }
+  
+    function pathBetween(a, b) {
+      const [r0, c0] = a, [r1, c1] = b;
+      const dr = Math.sign(r1 - r0), dc = Math.sign(c1 - c0);
+      const lenR = Math.abs(r1 - r0), lenC = Math.abs(c1 - c0);
+      // Must be straight line: horizontal, vertical, or perfect diagonal
+      if (!(r0 === r1 || c0 === c1 || lenR === lenC)) return null;
+      const len = Math.max(lenR, lenC);
+      const cells = [];
+      for (let k = 0; k <= len; k++) cells.push([r0 + dr * k, c0 + dc * k]);
+      return cells;
+    }
+  
+    function clearSelectionHighlight() {
+      selCells.forEach(([r, c]) => cellEl(r, c).classList.remove("selecting"));
+      selCells = [];
+    }
+  
+    function updateSelection(target) {
+      const path = pathBetween(selStart, target);
+      if (!path) return;
+      clearSelectionHighlight();
+      selCells = path;
+      selCells.forEach(([r, c]) => cellEl(r, c).classList.add("selecting"));
+    }
+  
+    function commitSelection() {
+      if (!selCells.length) return;
+      const letters = selCells.map(([r, c]) => grid[r][c]).join("");
+      const reversed = letters.split("").reverse().join("");
+  
+      const idx = placedWords.findIndex(pw =>
+        !pw.found && (pw.word === letters || pw.word === reversed)
+      );
+  
+      clearSelectionHighlight();
+      if (idx === -1) return;
+  
+      const pw = placedWords[idx];
+      pw.found = true;
+      foundCount++;
+  
+      const [c1, c2] = FOUND_COLORS[idx % FOUND_COLORS.length];
+      pw.cells.forEach(([r, c], k) => {
+        const el = cellEl(r, c);
+        el.classList.add("found", "pop");
+        el.style.background = `linear-gradient(135deg, ${c1}, ${c2})`;
+        el.style.boxShadow = `0 0 12px ${c1}55`;
+        el.style.transitionDelay = (k * 20) + "ms";
+        setTimeout(() => { el.classList.remove("pop"); el.style.transitionDelay = ""; }, 400 + k * 20);
+      });
+  
+      const wordEl = $("word-" + idx);
+      wordEl.classList.add("found");
+      wordEl.style.background = `linear-gradient(135deg, ${c1}, ${c2})`;
+  
+      updateHud();
+      if (foundCount === placedWords.length) win();
+    }
+  
+    board.addEventListener("pointerdown", (e) => {
+      const cell = cellFromPoint(e.clientX, e.clientY);
+      if (!cell) return;
+      selecting = true;
+      selStart = cell;
+      updateSelection(cell);
+      e.preventDefault();
+    });
+  
+    window.addEventListener("pointermove", (e) => {
+      if (!selecting) return;
+      const cell = cellFromPoint(e.clientX, e.clientY);
+      if (cell) updateSelection(cell);
+    });
+  
+    window.addEventListener("pointerup", () => {
+      if (!selecting) return;
+      selecting = false;
+      commitSelection();
+      selStart = null;
+    });
+  
+    // ---------- Win ----------
+    function win() {
+      clearInterval(timerInterval);
+      finalTime = fmt(Math.floor((Date.now() - startTime) / 1000));
+      $("winCount").textContent = placedWords.length;
+      $("winTime").textContent = finalTime;
+      setTimeout(() => {
+        $("overlay").classList.add("show");
+        confetti();
+      }, 500);
+    }
+  
+    // ---------- Confetti ----------
+    function confetti() {
+      const canvas = $("confetti");
+      const ctx = canvas.getContext("2d");
+      canvas.width = innerWidth;
+      canvas.height = innerHeight;
+      const colors = FOUND_COLORS.map(c => c[0]);
+      const parts = Array.from({ length: 160 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.5,
+        w: 6 + Math.random() * 6,
+        h: 8 + Math.random() * 8,
+        vy: 2 + Math.random() * 3.5,
+        vx: -1.5 + Math.random() * 3,
+        rot: Math.random() * Math.PI,
+        vr: -0.1 + Math.random() * 0.2,
+        color: colors[rand(colors.length)]
+      }));
+      const t0 = Date.now();
+      (function frame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        parts.forEach(p => {
+          p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        if (Date.now() - t0 < 4200) requestAnimationFrame(frame);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      })();
+    }
+  
+    // ---------- New game ----------
+    function newGame() {
+      $("overlay").classList.remove("show");
+      foundCount = 0;
+      const config = DIFFICULTY[$("difficulty").value];
+      const themeNames = Object.keys(THEMES);
+      const theme = themeNames[rand(themeNames.length)];
+      $("themeName").textContent = theme;
+      generate(theme, config);
+      render();
+      startTimer();
+    }
+  
+    $("newGame").addEventListener("click", newGame);
+    $("playAgain").addEventListener("click", newGame);
+    $("difficulty").addEventListener("change", newGame);
+  
+    newGame();
+  })();
+  </script>
+  </body>
+  </html>
