@@ -1,0 +1,647 @@
+<!doctype html>
+  <html lang="en">
+  <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The One With All The Trivia</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/outfit@5/index.min.css" />
+  <style>
+    :root{
+      --bg:#100e1a; --bg2:#181528; --card:#1e1a30; --card2:#252040;
+      --ink:#f3f0ff; --muted:#9d97b8;
+      --red:#ff5a5f; --blue:#4da3ff; --yellow:#ffd23f; --purple:#8b6ce7; --green:#3ddc97;
+      --border:rgba(255,255,255,.08);
+      --shadow:0 20px 60px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box; margin:0; padding:0;}
+    html,body{height:100%;}
+    body{
+      font-family:'Outfit Variable', 'Outfit', system-ui, sans-serif;
+      background:
+        radial-gradient(1200px 800px at 85% -10%, rgba(139,108,231,.16), transparent 60%),
+        radial-gradient(900px 700px at -10% 110%, rgba(77,163,255,.10), transparent 60%),
+        radial-gradient(700px 500px at 50% 120%, rgba(255,90,95,.07), transparent 60%),
+        var(--bg);
+      color:var(--ink);
+      min-height:100%;
+      display:flex; align-items:flex-start; justify-content:center;
+      padding:32px 18px 60px;
+      -webkit-font-smoothing:antialiased;
+    }
+    #app{width:100%; max-width:760px;}
+  
+    /* ---------- Logo ---------- */
+    .logo{
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      font-weight:800; letter-spacing:.5px; user-select:none;
+      font-size:clamp(34px,6vw,52px);
+    }
+    .logo .dot{width:.28em; height:.28em; border-radius:50%; display:inline-block; animation:bob 2.6s ease-in-out infinite;}
+    .logo .dot.r{background:var(--red);}
+    .logo .dot.b{background:var(--blue); animation-delay:.4s;}
+    .logo .dot.y{background:var(--yellow); animation-delay:.8s;}
+    @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-22%)}}
+    .tagline{text-align:center; color:var(--muted); margin-top:6px; font-size:15px;}
+    .tagline em{color:var(--ink); font-style:normal; font-weight:600;}
+  
+    /* ---------- Cards & buttons ---------- */
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)), var(--card);
+      border:1px solid var(--border); border-radius:22px;
+      box-shadow:var(--shadow);
+    }
+    .mode-grid{display:grid; gap:14px; margin-top:28px;}
+    .mode{
+      display:flex; align-items:center; gap:18px; padding:22px 24px;
+      cursor:pointer; transition:transform .18s ease, border-color .18s ease, background .18s ease;
+      text-align:left; width:100%; color:var(--ink); font:inherit;
+    }
+    .mode:hover{transform:translateY(-3px); border-color:rgba(255,255,255,.22);}
+    .mode .icon{
+      width:56px; height:56px; border-radius:16px; flex:0 0 auto;
+      display:flex; align-items:center; justify-content:center; font-size:26px;
+    }
+    .mode h3{font-size:19px; font-weight:700; margin-bottom:3px;}
+    .mode p{color:var(--muted); font-size:14px; line-height:1.45;}
+    .mode .arrow{margin-left:auto; color:var(--muted); font-size:20px; transition:transform .18s;}
+    .mode:hover .arrow{transform:translateX(4px); color:var(--ink);}
+    .ic-purple{background:rgba(139,108,231,.16); color:var(--purple);}
+    .ic-yellow{background:rgba(255,210,63,.14); color:var(--yellow);}
+    .ic-red{background:rgba(255,90,95,.15); color:var(--red);}
+  
+    .btn{
+      font:inherit; font-weight:700; color:var(--ink);
+      background:var(--card2); border:1px solid var(--border); border-radius:14px;
+      padding:13px 22px; cursor:pointer; transition:transform .15s, filter .15s, border-color .15s;
+    }
+    .btn:hover{transform:translateY(-2px); border-color:rgba(255,255,255,.25);}
+    .btn.primary{background:linear-gradient(135deg, var(--purple), #6c4fd0); border:none;}
+    .btn.primary:hover{filter:brightness(1.12);}
+    .btn.ghost{background:transparent;}
+    .btn:disabled{opacity:.45; cursor:default; transform:none;}
+  
+    /* ---------- Setup screens ---------- */
+    .setup{padding:30px; margin-top:26px; animation:pop .3s ease;}
+    .setup h2{font-size:24px; margin-bottom:4px;}
+    .setup .sub{color:var(--muted); font-size:14px; margin-bottom:22px;}
+    .opt-label{font-size:13px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted); margin:18px 0 10px;}
+    .seg{display:flex; gap:10px; flex-wrap:wrap;}
+    .seg button{
+      font:inherit; font-weight:600; color:var(--muted);
+      background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+      padding:11px 18px; cursor:pointer; transition:all .15s;
+    }
+    .seg button:hover{color:var(--ink);}
+    .seg button.sel{color:var(--ink); border-color:transparent; box-shadow:0 0 0 2px var(--purple); background:rgba(139,108,231,.14);}
+    .seg button.sel.easy{box-shadow:0 0 0 2px var(--green); background:rgba(61,220,151,.12);}
+    .seg button.sel.med{box-shadow:0 0 0 2px var(--yellow); background:rgba(255,210,63,.10);}
+    .seg button.sel.hard{box-shadow:0 0 0 2px var(--red); background:rgba(255,90,95,.12);}
+    .setup .actions{display:flex; gap:12px; margin-top:28px;}
+  
+    /* ---------- Game screen ---------- */
+    .hud{display:flex; align-items:center; gap:14px; margin:26px 0 14px; font-size:14px; color:var(--muted);}
+    .hud .pill{
+      background:var(--card); border:1px solid var(--border); border-radius:999px;
+      padding:7px 14px; font-weight:600; display:flex; align-items:center; gap:7px;
+    }
+    .hud .score{color:var(--yellow);}
+    .hud .streak{color:var(--red);}
+    .hud .right{margin-left:auto; display:flex; gap:10px;}
+    .progress{height:6px; background:var(--bg2); border-radius:99px; overflow:hidden; margin-bottom:20px;}
+    .progress i{display:block; height:100%; border-radius:99px;
+      background:linear-gradient(90deg, var(--red), var(--yellow), var(--blue));
+      transition:width .35s ease;}
+  
+    .qcard{padding:30px; animation:pop .28s ease;}
+    @keyframes pop{from{opacity:0; transform:translateY(10px) scale(.985);} to{opacity:1; transform:none;}}
+    .qmeta{display:flex; gap:8px; margin-bottom:14px;}
+    .chip{font-size:11.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+      padding:5px 11px; border-radius:99px;}
+    .chip.easy{background:rgba(61,220,151,.14); color:var(--green);}
+    .chip.medium{background:rgba(255,210,63,.13); color:var(--yellow);}
+    .chip.hard{background:rgba(255,90,95,.14); color:var(--red);}
+    .chip.quote{background:rgba(77,163,255,.14); color:var(--blue);}
+    .qtext{font-size:clamp(19px,3vw,23px); font-weight:700; line-height:1.4; margin-bottom:24px;}
+    .qtext .quotemark{color:var(--purple); font-size:1.4em; line-height:0; vertical-align:-6px; margin-right:2px;}
+  
+    .answers{display:grid; gap:11px;}
+    @media(min-width:600px){.answers.four{grid-template-columns:1fr 1fr;}}
+    .ans{
+      font:inherit; font-size:16px; font-weight:600; color:var(--ink); text-align:left;
+      background:var(--bg2); border:1.5px solid var(--border); border-radius:14px;
+      padding:15px 18px; cursor:pointer; display:flex; align-items:center; gap:12px;
+      transition:transform .13s, border-color .13s, background .13s;
+    }
+    .ans .key{
+      width:26px; height:26px; border-radius:8px; flex:0 0 auto;
+      background:rgba(255,255,255,.07); color:var(--muted);
+      display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800;
+    }
+    .ans:hover:not(:disabled){transform:translateY(-2px); border-color:var(--purple); background:rgba(139,108,231,.08);}
+    .ans:disabled{cursor:default;}
+    .ans.correct{border-color:var(--green); background:rgba(61,220,151,.14); animation:pulseG .45s;}
+    .ans.correct .key{background:var(--green); color:#06281a;}
+    .ans.wrong{border-color:var(--red); background:rgba(255,90,95,.13); animation:shake .4s;}
+    .ans.wrong .key{background:var(--red); color:#2b0708;}
+    .ans.dim{opacity:.4;}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+    @keyframes pulseG{0%{transform:scale(1)}40%{transform:scale(1.025)}100%{transform:scale(1)}}
+  
+    .feedback{min-height:54px; display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:18px;}
+    .feedback .msg{font-weight:700; font-size:16px;}
+    .feedback .msg.good{color:var(--green);}
+    .feedback .msg.bad{color:var(--red);}
+    .feedback .msg small{display:block; color:var(--muted); font-weight:500; font-size:13px; margin-top:2px;}
+  
+    /* ---------- Lightning ---------- */
+    .timerwrap{display:flex; align-items:center; gap:10px;}
+    .timerbar{flex:1; height:10px; background:var(--bg2); border-radius:99px; overflow:hidden;}
+    .timerbar i{display:block; height:100%; background:linear-gradient(90deg,var(--yellow),var(--red)); border-radius:99px;}
+    .timernum{font-weight:800; font-variant-numeric:tabular-nums; width:44px; text-align:right;}
+    .timernum.low{color:var(--red); animation:blink .5s steps(2) infinite;}
+    @keyframes blink{50%{opacity:.35}}
+  
+    /* ---------- Results ---------- */
+    .results{padding:40px 30px; text-align:center; margin-top:26px; animation:pop .35s ease; position:relative; overflow:hidden;}
+    .results .big{font-size:56px; font-weight:800; line-height:1;}
+    .results .big span{font-size:26px; color:var(--muted); font-weight:600;}
+    .results .verdict{font-size:21px; font-weight:700; margin:16px 0 6px;}
+    .results .verdict-sub{color:var(--muted); font-size:14.5px; margin-bottom:24px;}
+    .statrow{display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:28px;}
+    .stat{background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:12px 20px; min-width:100px;}
+    .stat b{display:block; font-size:20px;}
+    .stat span{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px;}
+    .results .actions{display:flex; justify-content:center; gap:12px; flex-wrap:wrap;}
+  
+    .home-link{background:none;border:none;cursor:pointer;color:var(--muted);font:inherit;font-size:14px;padding:6px 10px;border-radius:8px;}
+    .home-link:hover{color:var(--ink);}
+    canvas#confetti{position:fixed; inset:0; pointer-events:none; z-index:50;}
+    .hidden{display:none !important;}
+  </style>
+  </head>
+  <body>
+  <canvas id="confetti"></canvas>
+  <div id="app"></div>
+  
+  <script>
+  'use strict';
+  /* ============================================================
+     DATA — Trivia questions. Format: [question, [answers], 0]
+     The FIRST answer is always correct; options get shuffled.
+     ============================================================ */
+  const TRIVIA = {
+  easy: [
+  ["What is the name of the coffee shop where the gang hangs out?", ["Central Perk","Java Joe's","The Grind House","Perk Avenue"]],
+  ["What is Ross Geller's profession?", ["Paleontologist","Archaeologist","Astronomer","Geologist"]],
+  ["What is Monica's profession?", ["Chef","Interior designer","Caterer only","Food critic"]],
+  ["Whose famous pickup line is \u201cHow you doin'?\u201d", ["Joey","Chandler","Ross","Gunther"]],
+  ["How are Ross and Monica related?", ["Brother and sister","Cousins","Childhood neighbors","College friends"]],
+  ["What is Phoebe's most famous song?", ["Smelly Cat","Sticky Shoes","Little Black Curly Hair","Ode to a Pigeon"]],
+  ["Rachel arrives in the very first episode after running out on her wedding to whom?", ["Barry","Paolo","Tag","Joshua"]],
+  ["Which soap opera does Joey star in?", ["Days of Our Lives","General Hospital","The Young and the Restless","All My Children"]],
+  ["What is the name of Joey's soap opera character?", ["Dr. Drake Ramoray","Dr. Chase Remington","Dr. Blake Montgomery","Dr. Rex Harrington"]],
+  ["What is the name of Ross's pet monkey?", ["Marcel","Mango","Milo","Bongo"]],
+  ["In which city is Friends set?", ["New York City","Chicago","Boston","Los Angeles"]],
+  ["Who does Monica marry?", ["Chandler","Richard","Pete","Fun Bobby"]],
+  ["What is Rachel's first job on the show?", ["Waitress at Central Perk","Assistant at Bloomingdale's","Receptionist","Barista at a bookstore"]],
+  ["Complete Ross's famous line: \u201cWe were on a ___!\u201d", ["Break","Pause","Time-out","Breather"]],
+  ["Who is the older Geller sibling?", ["Ross","Monica","They're twins","It's never revealed"]],
+  ["What is the name of Phoebe's identical twin sister?", ["Ursula","Ulrika","Uma","Ramona"]],
+  ["Complete the line: \u201cJoey doesn't share ___!\u201d", ["Food","Girls","Clothes","The remote"]],
+  ["Who does Ross marry in London?", ["Emily","Rachel","Carol","Bonnie"]],
+  ["What do Ross and Rachel name their daughter?", ["Emma","Ella","Isabella","Sophie"]],
+  ["Who owns the chick and the duck?", ["Joey and Chandler","Ross","Phoebe","Monica and Rachel"]],
+  ["What is Monica's apartment number for most of the series?", ["20","19","5","42"]],
+  ["Who screams \u201cPIVOT!\u201d while moving a couch up the stairs?", ["Ross","Chandler","Joey","Monica"]],
+  ["Which friend is Gunther hopelessly in love with?", ["Rachel","Monica","Phoebe","Joey"]],
+  ["What is Janice's famous catchphrase?", ["\u201cOh. My. God.\u201d","\u201cNo. Way. Ever.\u201d","\u201cYou. Are. Kidding.\u201d","\u201cStop. It. Now.\u201d"]],
+  ["Which instrument does Phoebe play at Central Perk?", ["Guitar","Ukulele","Keyboard","Bongos"]],
+  ["How many seasons of Friends are there?", ["10","8","9","12"]],
+  ["What are the names of Ross and Monica's parents?", ["Jack and Judy","John and Julia","Jim and Joan","Jake and Janet"]],
+  ["Phoebe becomes a surrogate and gives birth to triplets for whom?", ["Her brother Frank Jr.","Her sister Ursula","Monica and Chandler","A stranger from her massage clinic"]],
+  ["In the final episode, Rachel famously \u201cgot off the ___.\u201d", ["Plane","Train","Bus","Boat"]],
+  ["Whose name does Ross accidentally say at the altar in London?", ["Rachel","Carol","Monica","Julie"]],
+  ["What is the running joke about Chandler's job?", ["Nobody knows what he does","He never shows up to work","He's secretly unemployed","He works for his mom"]],
+  ["Rachel builds her career in which industry?", ["Fashion","Advertising","Publishing","Hospitality"]],
+  ["What is the name of Joey's beloved stuffed penguin?", ["Hugsy","Snugsy","Waddles","Pengy"]],
+  ["Which friend used to be very overweight in high school?", ["Monica","Rachel","Chandler","Phoebe"]],
+  ["What is the name of Ross's first wife?", ["Carol","Susan","Emily","Julie"]],
+  ["Carol left Ross for whom?", ["Susan","Her personal trainer","Her college professor","Mark"]],
+  ["What color is the iconic couch at Central Perk?", ["Orange","Red","Brown","Green"]],
+  ["Who hosts and cooks Thanksgiving dinner almost every year?", ["Monica","Phoebe","Ross","Joey"]],
+  ["What is the name of Ross's son?", ["Ben","Ben-jamin... it's Max","Sam","Charlie"]],
+  ["What fake name does Phoebe famously use?", ["Regina Phalange","Ramona Falange","Rita Fontaine","Roberta Phillips"]]
+  ],
+  medium: [
+  ["What is Chandler's embarrassing middle name?", ["Muriel","Marion","Francis","Leslie"]],
+  ["What are the names of Rachel's two sisters?", ["Jill and Amy","Jen and Abby","Julie and Anna","Jess and Amber"]],
+  ["What is the name of Joey's chain-smoking agent?", ["Estelle","Eleanor","Edna","Esther"]],
+  ["Who does Phoebe marry?", ["Mike Hannigan","David the scientist","Gary the cop","Duncan"]],
+  ["When Phoebe changes her name to something ridiculous, what does Mike change his to?", ["Crap Bag","Trash Can","Dirt Bag","Junk Pile"]],
+  ["Phoebe changes her name to Princess Consuela ___.", ["Banana-Hammock","Bandana-Hat","Bahama-Mama","Banana-Pancake"]],
+  ["Who are Ben's two moms?", ["Carol and Susan","Carol and Sandra","Susan and Sarah","Carol and Emily"]],
+  ["What is Richard's profession?", ["Ophthalmologist","Cardiologist","Dentist","Dermatologist"]],
+  ["Which actor plays Monica's boyfriend Richard?", ["Tom Selleck","Bruce Willis","Alec Baldwin","Kevin Costner"]],
+  ["What fake name does Joey always use?", ["Ken Adams","Clint Weston","Jack Powers","Dean Winters"]],
+  ["Where does Chandler pretend to move to escape Janice?", ["Yemen","Siberia","Nebraska","New Zealand"]],
+  ["What does Phoebe find floating in a can of soda?", ["A thumb","A tooth","An eyeball","A ring"]],
+  ["How much money is Phoebe given as compensation for the soda incident?", ["$7,000","$1,000","$10,000","$500"]],
+  ["Who was Chandler's roommate before Joey?", ["Kip","Kyle","Keith","Kevin"]],
+  ["What is Barry's profession?", ["Orthodontist","Podiatrist","Accountant","Lawyer"]],
+  ["In the trivia game for the apartment, what question do Monica and Rachel lose on?", ["What is Chandler's job?","What is Joey's favorite food?","Name every Bing grandparent","What size are Joey's shoes?"]],
+  ["What does Ross call his state of \u201ctotal awareness\u201d?", ["Unagi","Wasabi","Zen-jitsu","Shiitake"]],
+  ["How many sisters does Joey have?", ["7","4","5","6"]],
+  ["What exactly is the Geller Cup, the Thanksgiving football trophy?", ["A troll doll nailed to a two-by-four","A golden turkey statue","A spray-painted football","An old bowling trophy"]],
+  ["Ross's \u201cSpud-nik\u201d Halloween costume is a mash-up of a satellite and what?", ["A potato","A pumpkin","A meatball","A turnip"]],
+  ["After the spray-tan disaster, Ross yells that he's what number?", ["An eight","A six","A ten","A four"]],
+  ["What are the names of the triplets Phoebe gives birth to?", ["Frank Jr. Jr., Leslie, and Chandler","Frank Jr. Jr., Lucy, and Joey","Frankie, Lisa, and Ross","Frank III, Leslie, and Monica"]],
+  ["What is the name of Frank Jr.'s wife?", ["Alice","Annie","Agnes","Amanda"]],
+  ["Joey lands a movie role as which star's butt double?", ["Al Pacino","Robert De Niro","Sylvester Stallone","Harrison Ford"]],
+  ["Emma's first birthday cake was supposed to be shaped like what?", ["A bunny","A duck","A teddy bear","A princess castle"]],
+  ["At which restaurant does Monica become head chef in season 4?", ["Alessandro's","Javu","Iridium","Moondance Diner"]],
+  ["Chandler falls for which of Joey's girlfriends?", ["Kathy","Erin","Angela","Katie"]],
+  ["Millionaire Pete Becker quits tech to pursue what dream?", ["Becoming the Ultimate Fighting Champion","Climbing Mount Everest","Becoming an astronaut","Sailing around the world"]],
+  ["What is the name of Phoebe's police officer boyfriend?", ["Gary","Greg","Glenn","George"]],
+  ["Where does Rachel work before Ralph Lauren?", ["Bloomingdale's","Macy's","Saks Fifth Avenue","Barneys"]],
+  ["Ross dresses as the \u201cHoliday Armadillo\u201d to teach Ben about what?", ["Hanukkah","Recycling","Thanksgiving","Kwanzaa"]],
+  ["What does Joey do to get back at Chandler for hiding his underwear?", ["Wears everything Chandler owns at once","Throws his clothes off the balcony","Fills his room with chickens","Sells his furniture"]],
+  ["Monica leaves a rambling \u201cI'm breezy!\u201d phone message for whom?", ["Richard","Pete","Chandler","Fun Bobby"]],
+  ["Which instrument did Ross play in his college band days?", ["Keyboards","Drums","Saxophone","Bass guitar"]],
+  ["What is the name of Joey's beloved recliner?", ["Rosita","Lucille","Stevie","Betsy"]]
+  ],
+  hard: [
+  ["Chandler's TV Guide is always addressed to whom?", ["Miss Chanandler Bong","Mr. Chandler Bong","Miss Chanel Bing","Mr. Chandelier Bing"]],
+  ["How is Dr. Drake Ramoray written off Days of Our Lives?", ["He falls down an elevator shaft","He dies in a helicopter crash","He's poisoned by his twin","He moves to a clinic in Bolivia"]],
+  ["What was Monica's apartment number in the earliest episodes, before it changed?", ["5","20","4","12"]],
+  ["What is Chandler's mother's first name?", ["Nora","Norma","Nancy","Naomi"]],
+  ["What is the name of Chandler's dad's Vegas drag show?", ["Viva Las Gaygas","Fabulous Vegas Nights","Las Vegas Showgirl","The Bing Revue"]],
+  ["What is the name of Ross's much-younger student girlfriend?", ["Elizabeth","Emily","Erin","Erika"]],
+  ["What is the first name of Elizabeth's intimidating father, played by Bruce Willis?", ["Paul","Peter","Patrick","Phillip"]],
+  ["Joey stars in a Japanese commercial for which men's lipstick brand?", ["Ichiban","Sakura","Kabuki","Bushido"]],
+  ["Which fruit is Ross allergic to?", ["Kiwi","Mango","Strawberry","Pineapple"]],
+  ["What is the first name of Phoebe's birth mother?", ["Phoebe","Lily","Frances","Rose"]],
+  ["What is Emily's last name?", ["Waltham","Whitmore","Wellington","Winslow"]],
+  ["Rachel's infamous Thanksgiving trifle accidentally contains what?", ["Beef","Chicken","Fish paste","Bacon"]],
+  ["Who says Rachel's trifle \u201ctastes like feet\u201d?", ["Ross","Chandler","Monica","Phoebe"]],
+  ["What is the name of Joey's World War I movie?", ["Over There","The Great Push","No Man's Land","Trenches"]],
+  ["What is the name of the musical Joey stars in about a famous psychologist?", ["Freud!","Jung!","Pavlov!","Ego!"]],
+  ["What is the nickname of Monica's boyfriend who's only fun when he drinks?", ["Fun Bobby","Party Pete","Wild Willy","Crazy Eddie"]],
+  ["What does Phoebe inherit from her grandmother?", ["A taxi cab","An apartment","A guitar","A massage table"]],
+  ["What is Chandler's dad's stage name?", ["Helena Handbasket","Amanda Reckonwith","Anita Mann","Ida Slapter"]],
+  ["In Monica's famous \u201cerogenous zones\u201d lesson, which number does she scream repeatedly?", ["Seven","Three","Five","Nine"]],
+  ["Ross gets stuck in his leather pants and makes it worse by mixing lotion with what?", ["Powder","Ice water","Hair gel","Butter"]],
+  ["What is the name of Rachel's young assistant that she dates?", ["Tag","Todd","Troy","Trevor"]],
+  ["What is Tag's last name?", ["Jones","Johnson","Jenkins","Jameson"]],
+  ["Where does Phoebe's twin Ursula work as a waitress?", ["Riff's","Moondance Diner","Marcel's","The Lucky Penny"]],
+  ["What was the name of Joey's imaginary childhood friend?", ["Maurice","Marcel","Milton","Mickey"]],
+  ["When Chandler finally quits his mystery job, what career does he start over in?", ["Advertising","Publishing","Real estate","Teaching"]],
+  ["What is the name of Rachel's hairless Sphynx cat?", ["Mrs. Whiskerson","Mr. Baldy","Fluffy Meowington","Princess Skin"]],
+  ["Rachel's prom date, whom Monica later dates, is named what?", ["Chip Matthews","Chad Michaels","Chuck Mitchell","Chris Miller"]],
+  ["What is the name of Phoebe's scientist boyfriend who moves to Minsk?", ["David","Daniel","Duncan","Dexter"]],
+  ["How long is the letter Rachel makes Ross read before getting back together?", ["18 pages \u2014 front and back!","12 pages \u2014 single-spaced!","25 pages \u2014 both sides!","10 pages \u2014 in cursive!"]],
+  ["What game show does Joey audition to host?", ["Bamboozled","Flimflammed!","Hoodwinked","Snookered"]],
+  ["Who puts a turkey on their head to make Chandler laugh (and gets an \u201cI love you\u201d)?", ["Monica","Joey","Phoebe","Rachel"]],
+  ["What is the name of the woman Joey falls for while she's dating Ross (a paleontologist)?", ["Charlie","Cheryl","Chloe","Cassie"]]
+  ]
+  };
+  
+  /* ============================================================
+     DATA — Who Said It? quotes. [quote, speaker]
+     ============================================================ */
+  const QUOTES = [
+  ["We were on a break!","Ross"],
+  ["How you doin'?","Joey"],
+  ["Smelly cat, smelly cat, what are they feeding you?","Phoebe"],
+  ["Oh. My. God.","Janice"],
+  ["Could I BE wearing any more clothes?","Joey"],
+  ["I'm not great at the advice. Can I interest you in a sarcastic comment?","Chandler"],
+  ["Welcome to the real world. It sucks. You're gonna love it.","Monica"],
+  ["They don't know that we know they know we know.","Phoebe"],
+  ["Joey doesn't share food!","Joey"],
+  ["See? He's her lobster.","Phoebe"],
+  ["I got off the plane.","Rachel"],
+  ["It's like all my life everyone has always told me, 'You're a shoe!'","Rachel"],
+  ["Gum would be perfection.","Chandler"],
+  ["Je m'appelle Claude.","Joey"],
+  ["MY sandwich?! MY SANDWICH!","Ross"],
+  ["It's a moo point. It's like a cow's opinion. It just doesn't matter.","Joey"],
+  ["Until I was 25, I thought that the only response to 'I love you' was 'Oh, crap!'","Chandler"],
+  ["Oh, I wish I could, but I don't want to.","Phoebe"],
+  ["Isn't that just kick-you-in-the-crotch, spit-on-your-neck fantastic?","Rachel"],
+  ["Just so you know: it's NOT that common, it DOESN'T happen to every guy, and it IS a big deal!","Rachel"],
+  ["I grew up with Monica. If you didn't eat fast, you didn't eat.","Ross"],
+  ["Here come the meat sweats.","Joey"],
+  ["PIVOT! PIVOT! PIVOT!","Ross"],
+  ["I'm breezy!","Monica"],
+  ["You can't just give up! Is that what a dinosaur would do?","Joey"]
+  ];
+  const CHARACTERS = ["Ross","Rachel","Monica","Chandler","Joey","Phoebe","Janice","Gunther"];
+  
+  /* ============================================================
+     Helpers
+     ============================================================ */
+  const $ = sel => document.querySelector(sel);
+  const app = $("#app");
+  function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  const PRAISE = ["Could you BE any more correct?","How you doin', genius?","That's a moo point... because you nailed it!","Nailed it — seven! SEVEN!","Perfection. Gum would be perfection.","You're their lobster.","Joey would share food with you.","Smelly Cat approves.","Unagi. Total awareness.","PIVOT into the next one!"];
+  const OOPS = ["We were on a break from being right.","Oh. My. God. Not quite.","That answer tastes like feet.","Well, that got bamboozled.","It's like a cow's opinion — it just didn't matter.","Chandler could BE more disappointed... but not much.","Even Marcel knew that one.","Regina Phalange says no."];
+  function pick(a){return a[Math.floor(Math.random()*a.length)];}
+  
+  function verdictFor(pct){
+    if(pct>=90) return ["Could you BE any smarter? \u2b50","You're basically the seventh friend. Gunther is jealous."];
+    if(pct>=75) return ["You're their lobster! \ud83e\udd9e","Ross would be proud. And he has a PhD."];
+    if(pct>=55) return ["Not too shabby! \u2615","A solid regular at Central Perk. Keep the orange couch warm."];
+    if(pct>=35) return ["It's a moo point. \ud83d\udc04","You've seen the show... probably while scrolling your phone."];
+    return ["Welcome to the real world. It sucks. \ud83c\udf27\ufe0f","Time for a 236-episode rewatch. You're gonna love it."];
+  }
+  
+  /* ============================================================
+     Confetti
+     ============================================================ */
+  const conf = { c: $("#confetti"), ctx:null, parts:[], raf:null };
+  conf.ctx = conf.c.getContext("2d");
+  function fitConfetti(){conf.c.width=innerWidth; conf.c.height=innerHeight;}
+  addEventListener("resize", fitConfetti); fitConfetti();
+  function fireConfetti(){
+    const colors=["#ff5a5f","#4da3ff","#ffd23f","#8b6ce7","#3ddc97"];
+    for(let i=0;i<140;i++){
+      conf.parts.push({x:Math.random()*conf.c.width, y:-20-Math.random()*conf.c.height*0.4,
+        w:6+Math.random()*6, h:8+Math.random()*8, vy:2+Math.random()*3.5, vx:-1.5+Math.random()*3,
+        rot:Math.random()*Math.PI, vr:-0.1+Math.random()*0.2, color:pick(colors)});
+    }
+    if(!conf.raf) tickConfetti();
+  }
+  function tickConfetti(){
+    const {ctx,c,parts}=conf;
+    ctx.clearRect(0,0,c.width,c.height);
+    for(const p of parts){p.y+=p.vy; p.x+=p.vx+Math.sin(p.y*0.02); p.rot+=p.vr;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();}
+    conf.parts=parts.filter(p=>p.y<c.height+30);
+    if(conf.parts.length){conf.raf=requestAnimationFrame(tickConfetti);}
+    else{conf.raf=null; ctx.clearRect(0,0,c.width,c.height);}
+  }
+  
+  /* ============================================================
+     State + shared UI bits
+     ============================================================ */
+  let S = null;         // current game state
+  let timerInt = null;  // lightning timer
+  
+  function logoHTML(small){
+    return `<div class="logo" style="${small?'font-size:26px;justify-content:flex-start;':''}">
+      F<span class="dot r"></span>R<span class="dot b"></span>I<span class="dot y"></span>E<span class="dot r"></span>N<span class="dot b"></span>D<span class="dot y"></span>S
+    </div>`;
+  }
+  function stopTimer(){ if(timerInt){clearInterval(timerInt); timerInt=null;} }
+  
+  /* ============================================================
+     Screens
+     ============================================================ */
+  function showHome(){
+    stopTimer(); S=null;
+    app.innerHTML = `
+      ${logoHTML()}
+      <div class="tagline">The One With All The Games &mdash; <em>could this quiz BE any more fun?</em></div>
+      <div class="mode-grid">
+        <button class="card mode" id="m-trivia">
+          <div class="icon ic-purple">\ud83c\udfac</div>
+          <div><h3>Trivia Marathon</h3><p>105 questions across Easy, Medium &amp; Hard. Pick your difficulty and round length.</p></div>
+          <div class="arrow">\u2192</div>
+        </button>
+        <button class="card mode" id="m-quotes">
+          <div class="icon ic-yellow">\ud83d\udcac</div>
+          <div><h3>Who Said It?</h3><p>Iconic lines from the show. Match the quote to the friend (watch out for Janice).</p></div>
+          <div class="arrow">\u2192</div>
+        </button>
+        <button class="card mode" id="m-lightning">
+          <div class="icon ic-red">\u26a1</div>
+          <div><h3>Lightning Round</h3><p>60 seconds. Endless questions. Streaks multiply your score. Go go go!</p></div>
+          <div class="arrow">\u2192</div>
+        </button>
+      </div>`;
+    $("#m-trivia").onclick = showTriviaSetup;
+    $("#m-quotes").onclick = () => startQuotes();
+    $("#m-lightning").onclick = () => startLightning();
+  }
+  
+  function showTriviaSetup(){
+    let diff = "mixed", len = 15;
+    app.innerHTML = `
+      ${logoHTML(true)}
+      <div class="card setup">
+        <h2>Trivia Marathon</h2>
+        <div class="sub">Pick a difficulty and how many questions you want.</div>
+        <div class="opt-label">Difficulty</div>
+        <div class="seg" id="segd">
+          <button data-d="easy" class="easy">\u2615 Easy</button>
+          <button data-d="medium" class="med">\ud83d\udecb\ufe0f Medium</button>
+          <button data-d="hard" class="hard">\ud83e\udd9e Hard</button>
+          <button data-d="mixed" class="sel">\ud83c\udfb2 Mixed</button>
+        </div>
+        <div class="opt-label">Questions</div>
+        <div class="seg" id="segl">
+          <button data-l="10">10</button>
+          <button data-l="15" class="sel">15</button>
+          <button data-l="25">25</button>
+          <button data-l="all">All of them!</button>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="go">Start the round \u2192</button>
+          <button class="btn ghost" id="back">\u2190 Back</button>
+        </div>
+      </div>`;
+    $("#segd").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      $("#segd").querySelectorAll("button").forEach(x=>x.classList.remove("sel"));
+      b.classList.add("sel"); diff=b.dataset.d;
+    });
+    $("#segl").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      $("#segl").querySelectorAll("button").forEach(x=>x.classList.remove("sel"));
+      b.classList.add("sel"); len=b.dataset.l;
+    });
+    $("#back").onclick=showHome;
+    $("#go").onclick=()=>startTrivia(diff,len);
+  }
+  
+  function buildTriviaPool(diff){
+    const tag=(arr,d)=>arr.map(q=>({q:q[0], answers:q[1], diff:d}));
+    if(diff==="mixed"){
+      return shuffle([...tag(TRIVIA.easy,"easy"),...tag(TRIVIA.medium,"medium"),...tag(TRIVIA.hard,"hard")]);
+    }
+    return shuffle(tag(TRIVIA[diff],diff));
+  }
+  
+  function startTrivia(diff,len){
+    const pool = buildTriviaPool(diff);
+    const n = len==="all" ? pool.length : Math.min(parseInt(len,10), pool.length);
+    S = {mode:"trivia", qs:pool.slice(0,n), i:0, score:0, streak:0, best:0, correct:0};
+    renderQuestion();
+  }
+  
+  function startQuotes(){
+    const qs = shuffle(QUOTES).map(([quote,who])=>{
+      const others = shuffle(CHARACTERS.filter(c=>c!==who)).slice(0,3);
+      return {q:quote, answers:[who,...others], diff:"quote", isQuote:true};
+    });
+    S = {mode:"quotes", qs, i:0, score:0, streak:0, best:0, correct:0};
+    renderQuestion();
+  }
+  
+  function startLightning(){
+    const pool = shuffle([
+      ...buildTriviaPool("mixed"),
+      ...QUOTES.map(([quote,who])=>({q:quote, answers:[who,...shuffle(CHARACTERS.filter(c=>c!==who)).slice(0,3)], diff:"quote", isQuote:true}))
+    ]);
+    S = {mode:"lightning", qs:pool, i:0, score:0, streak:0, best:0, correct:0, answered:0, time:60};
+    renderQuestion();
+    timerInt = setInterval(()=>{
+      S.time--;
+      const bar=$("#tbar"), num=$("#tnum");
+      if(bar) bar.style.width=(S.time/60*100)+"%";
+      if(num){num.textContent=S.time+"s"; num.classList.toggle("low", S.time<=10);}
+      if(S.time<=0){stopTimer(); showResults();}
+    },1000);
+  }
+  
+  function renderQuestion(){
+    const q = S.qs[S.i];
+    const isL = S.mode==="lightning";
+    const total = S.qs.length;
+    const opts = shuffle(q.answers.map((a,idx)=>({a, ok:idx===0})));
+    const diffChip = q.isQuote
+      ? `<span class="chip quote">\ud83d\udcac Who said it?</span>`
+      : `<span class="chip ${q.diff}">${q.diff}</span>`;
+    const keys=["A","B","C","D"];
+  
+    app.innerHTML = `
+      ${logoHTML(true)}
+      <div class="hud">
+        <div class="pill score">\u2b50 <span id="score">${S.score}</span></div>
+        <div class="pill streak">\ud83d\udd25 ${S.streak}</div>
+        ${isL? "" : `<div class="pill">${S.i+1} / ${total}</div>`}
+        <div class="right"><button class="home-link" id="quit">\u2715 Quit</button></div>
+      </div>
+      ${isL
+        ? `<div class="timerwrap" style="margin-bottom:20px;">
+             <div class="timerbar"><i id="tbar" style="width:${S.time/60*100}%"></i></div>
+             <div class="timernum ${S.time<=10?'low':''}" id="tnum">${S.time}s</div>
+           </div>`
+        : `<div class="progress"><i style="width:${(S.i/total*100)}%"></i></div>`}
+      <div class="card qcard">
+        <div class="qmeta">${diffChip}</div>
+        <div class="qtext">${q.isQuote?'<span class="quotemark">\u201c</span>':''}${esc(q.q)}${q.isQuote?'<span class="quotemark">\u201d</span>':''}</div>
+        <div class="answers four" id="answers">
+          ${opts.map((o,i)=>`<button class="ans" data-ok="${o.ok?1:0}"><span class="key">${keys[i]}</span>${esc(o.a)}</button>`).join("")}
+        </div>
+        <div class="feedback" id="feedback"><div class="msg"></div></div>
+      </div>`;
+  
+    $("#quit").onclick=()=>{stopTimer(); showHome();};
+    document.querySelectorAll(".ans").forEach(btn=>{
+      btn.onclick=()=>answer(btn);
+    });
+  }
+  
+  function answer(btn){
+    const isL = S.mode==="lightning";
+    const ok = btn.dataset.ok==="1";
+    document.querySelectorAll(".ans").forEach(b=>{
+      b.disabled=true;
+      if(b.dataset.ok==="1") b.classList.add("correct");
+      else if(b===btn) b.classList.add("wrong");
+      else b.classList.add("dim");
+    });
+    if(isL) S.answered++;
+    if(ok){
+      S.correct++; S.streak++; S.best=Math.max(S.best,S.streak);
+      const mult = isL ? Math.min(1+Math.floor(S.streak/3)*0.5, 3) : 1;
+      const diffPts = {easy:100, medium:150, hard:200, quote:120}[S.qs[S.i].diff]||100;
+      const pts = Math.round(diffPts*(isL?mult:1) + (isL?0:S.streak>=3?50:0));
+      S.score += pts;
+      setFeedback(true, `+${pts}${isL&&mult>1?` (x${mult} streak!)`:S.streak>=3&&!isL?" (streak bonus!)":""}`);
+    } else {
+      S.streak=0;
+      setFeedback(false);
+    }
+    const delay = isL ? (ok?550:900) : 0;
+    if(isL){
+      setTimeout(()=>{ if(!S) return; nextQ(); }, delay);
+    } else {
+      const fb=$("#feedback");
+      const next=document.createElement("button");
+      next.className="btn primary";
+      next.textContent = S.i+1 < S.qs.length ? "Next \u2192" : "See results \u2192";
+      next.onclick=nextQ;
+      fb.appendChild(next);
+      next.focus();
+    }
+  }
+  
+  function setFeedback(ok,extra){
+    const msg=$("#feedback .msg");
+    if(ok){ msg.className="msg good"; msg.innerHTML=`${esc(pick(PRAISE))}<small>${extra||""}</small>`; }
+    else { msg.className="msg bad"; msg.innerHTML=`${esc(pick(OOPS))}<small>Streak reset. Shake it off like a wet dog at a wedding.</small>`; }
+  }
+  
+  function nextQ(){
+    if(!S) return;
+    S.i++;
+    if(S.mode==="lightning"){
+      if(S.i>=S.qs.length) S.i=0; // loop the pool, it's huge anyway
+      if(S.time>0) renderQuestion();
+      return;
+    }
+    if(S.i>=S.qs.length) showResults();
+    else renderQuestion();
+  }
+  
+  function showResults(){
+    stopTimer();
+    const isL = S.mode==="lightning";
+    const attempted = isL ? S.answered : S.qs.length;
+    const pct = attempted ? Math.round(S.correct/attempted*100) : 0;
+    const [v, vs] = verdictFor(pct);
+    const mode = S.mode;
+  
+    app.innerHTML = `
+      ${logoHTML(true)}
+      <div class="card results">
+        <div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">
+          ${isL?"\u26a1 Lightning Round":mode==="quotes"?"\ud83d\udcac Who Said It?":"\ud83c\udfac Trivia Marathon"} &mdash; Final Score</div>
+        <div class="big">${S.score}<span> pts</span></div>
+        <div class="verdict">${v}</div>
+        <div class="verdict-sub">${vs}</div>
+        <div class="statrow">
+          <div class="stat"><b>${S.correct}/${attempted}</b><span>Correct</span></div>
+          <div class="stat"><b>${pct}%</b><span>Accuracy</span></div>
+          <div class="stat"><b>\ud83d\udd25 ${S.best}</b><span>Best streak</span></div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="again">Play again</button>
+          <button class="btn" id="home">All games</button>
+        </div>
+      </div>`;
+    if(pct>=55 || (isL && S.score>=1000)) fireConfetti();
+    $("#home").onclick=showHome;
+    $("#again").onclick=()=>{
+      if(mode==="quotes") startQuotes();
+      else if(mode==="lightning") startLightning();
+      else showTriviaSetup();
+    };
+  }
+  
+  /* Keyboard shortcuts: A/B/C/D or 1-4 to answer, Enter for next */
+  document.addEventListener("keydown",(e)=>{
+    const map={a:0,b:1,c:2,d:3,"1":0,"2":1,"3":2,"4":3};
+    const k=e.key.toLowerCase();
+    if(k in map){
+      const btns=[...document.querySelectorAll(".ans:not(:disabled)")];
+      if(btns[map[k]]) btns[map[k]].click();
+    }
+  });
+  
+  showHome();
+  </script>
+  </body>
+  </html>

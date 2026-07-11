@@ -1,0 +1,471 @@
+<!doctype html>
+  <html lang="en">
+  <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Friends Trivia — The One With All The Questions</title>
+  <style>
+    :root {
+      --purple: #6b4d9e;
+      --purple-dark: #4a3470;
+      --purple-deep: #372754;
+      --yellow: #f5c518;
+      --red: #e94f64;
+      --blue: #5fb8de;
+      --cream: #fdf6e3;
+      --green: #46b483;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: radial-gradient(ellipse at 50% 20%, var(--purple-dark) 0%, var(--purple-deep) 70%);
+      color: var(--cream);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    /* Purple door frame */
+    .frame {
+      width: 100%;
+      max-width: 640px;
+      background: var(--purple);
+      border: 10px solid #563d85;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5), inset 0 0 0 3px rgba(255,255,255,.08);
+      padding: 28px 26px 26px;
+      position: relative;
+    }
+    /* Yellow peephole frame like Monica's door */
+    .peephole {
+      position: absolute;
+      top: -26px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 52px; height: 52px;
+      border: 5px solid var(--yellow);
+      border-radius: 50%;
+      background: var(--purple-dark);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.4);
+    }
+    h1 {
+      text-align: center;
+      font-family: 'Arial Black', Arial, sans-serif;
+      font-size: clamp(26px, 5vw, 38px);
+      letter-spacing: 2px;
+      margin-top: 14px;
+      color: #fff;
+      text-shadow: 0 3px 0 rgba(0,0,0,.35);
+    }
+    /* the FRIENDS-logo dots between letters */
+    h1 .dot { display: inline-block; width: .28em; text-align: center; transform: translateY(-.35em); font-size: .55em; }
+    .dot.r { color: var(--red); } .dot.b { color: var(--blue); } .dot.y { color: var(--yellow); }
+    .subtitle {
+      text-align: center;
+      font-style: italic;
+      color: rgba(253,246,227,.85);
+      margin: 8px 0 22px;
+      font-size: 15px;
+    }
+    .hidden { display: none !important; }
+  
+    /* HUD */
+    .hud {
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(0,0,0,.25);
+      border-radius: 12px;
+      padding: 10px 16px;
+      margin-bottom: 18px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    .hud .lives span.lost { opacity: .22; filter: grayscale(1); }
+    .hud .score b { color: var(--yellow); font-size: 18px; }
+    .hud .streak { color: var(--green); font-weight: bold; }
+  
+    /* Timer bar */
+    .timerbar { height: 8px; background: rgba(0,0,0,.3); border-radius: 6px; overflow: hidden; margin-bottom: 18px; }
+    .timerbar .fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--green), var(--yellow)); transition: width .2s linear; border-radius: 6px; }
+    .timerbar .fill.danger { background: var(--red); }
+  
+    .category {
+      display: inline-block;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: var(--yellow);
+      color: #3a2b12;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+      font-weight: bold;
+    }
+    .question {
+      font-size: 20px;
+      line-height: 1.45;
+      margin-bottom: 20px;
+      min-height: 60px;
+    }
+    .answers { display: grid; gap: 10px; }
+    .answers button {
+      font-family: Georgia, serif;
+      font-size: 16px;
+      text-align: left;
+      padding: 13px 16px;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.08);
+      color: var(--cream);
+      cursor: pointer;
+      transition: transform .1s, background .15s, border-color .15s;
+    }
+    .answers button:hover:not(:disabled) { background: rgba(255,255,255,.18); border-color: var(--yellow); transform: translateX(4px); }
+    .answers button:disabled { cursor: default; }
+    .answers button.correct { background: var(--green); border-color: var(--green); color: #fff; font-weight: bold; }
+    .answers button.wrong { background: var(--red); border-color: var(--red); color: #fff; }
+  
+    .feedback {
+      margin-top: 16px;
+      min-height: 48px;
+      text-align: center;
+      font-style: italic;
+      font-size: 16px;
+      color: var(--yellow);
+    }
+    .feedback.bad { color: #ffb3bd; }
+  
+    .bigbtn {
+      display: block;
+      width: 100%;
+      margin-top: 18px;
+      padding: 15px;
+      font-family: 'Arial Black', Arial, sans-serif;
+      font-size: 17px;
+      letter-spacing: 1px;
+      background: var(--yellow);
+      color: #3a2b12;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #b8930f;
+      transition: transform .08s;
+    }
+    .bigbtn:hover { transform: translateY(-2px); }
+    .bigbtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #b8930f; }
+  
+    /* Start & end screens */
+    .center { text-align: center; }
+    .couch { font-size: 64px; margin: 10px 0; }
+    .rules {
+      background: rgba(0,0,0,.22);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 18px 0;
+      font-size: 15px;
+      line-height: 1.8;
+      text-align: left;
+    }
+    .rules b { color: var(--yellow); }
+    .final-score { font-family: 'Arial Black', Arial, sans-serif; font-size: 52px; color: var(--yellow); margin: 8px 0; }
+    .rating { font-size: 20px; margin: 8px 0 4px; color: #fff; }
+    .rating-quote { font-style: italic; color: rgba(253,246,227,.85); margin-bottom: 6px; }
+    .best { font-family: Arial, sans-serif; font-size: 13px; color: rgba(253,246,227,.7); margin-top: 10px; }
+  
+    .cafe-sign {
+      text-align: center;
+      margin-top: 20px;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(253,246,227,.5);
+    }
+    @keyframes pop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+    .pop { animation: pop .35s ease-out; }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+    .shake { animation: shake .3s ease-in-out; }
+  </style>
+  </head>
+  <body>
+  <div class="frame" id="frame">
+    <div class="peephole">👁️</div>
+    <h1>F<span class="dot r">●</span>R<span class="dot b">●</span>I<span class="dot y">●</span>E<span class="dot r">●</span>N<span class="dot b">●</span>D<span class="dot y">●</span>S</h1>
+    <p class="subtitle">The One With All The Questions</p>
+  
+    <!-- START SCREEN -->
+    <div id="start" class="center">
+      <div class="couch">🛋️☕</div>
+      <div class="rules">
+        <b>How you doin'?</b> Here's the deal:<br>
+        ☕ You get <b>3 coffee cups</b> (lives). Wrong answer = one spilled.<br>
+        ⏱️ <b>20 seconds</b> per question — faster answers score more.<br>
+        🔥 Build a <b>streak</b> for bonus points.<br>
+        🎬 <b>10 questions</b> per episode. Could you BE any more ready?
+      </div>
+      <button class="bigbtn" onclick="startGame()">PIVOT! ...I mean, PLAY!</button>
+    </div>
+  
+    <!-- GAME SCREEN -->
+    <div id="game" class="hidden">
+      <div class="hud">
+        <div class="lives" id="lives">☕☕☕</div>
+        <div class="qcount" id="qcount">Q 1/10</div>
+        <div class="streak" id="streak"></div>
+        <div class="score">Score <b id="score">0</b></div>
+      </div>
+      <div class="timerbar"><div class="fill" id="timerfill"></div></div>
+      <span class="category" id="category"></span>
+      <div class="question" id="question"></div>
+      <div class="answers" id="answers"></div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  
+    <!-- END SCREEN -->
+    <div id="end" class="hidden center">
+      <div class="couch" id="endEmoji">🎉</div>
+      <div class="final-score" id="finalScore">0</div>
+      <div class="rating" id="rating"></div>
+      <div class="rating-quote" id="ratingQuote"></div>
+      <div class="best" id="best"></div>
+      <button class="bigbtn" onclick="startGame()">The One Where You Play Again</button>
+    </div>
+  
+    <div class="cafe-sign">— Central Perk · Est. 1994 —</div>
+  </div>
+  
+  <script>
+  const QUESTIONS = [
+    { c: "Catchphrases", q: "What is Joey's famous pick-up line?", a: ["How you doin'?", "Hey there, gorgeous!", "What's cookin', good lookin'?", "Come here often?"], correct: 0 },
+    { c: "Catchphrases", q: "Complete Ross's iconic line: \"We were on a ____!\"", a: ["vacation", "break", "date", "pause"], correct: 1 },
+    { c: "Catchphrases", q: "What does Ross yell repeatedly while moving a couch upstairs?", a: ["PUSH!", "LIFT!", "PIVOT!", "TURN!"], correct: 2 },
+    { c: "Catchphrases", q: "What is Janice's unmistakable catchphrase?", a: ["Oh. My. God.", "No way!", "You're kidding me!", "Shut up!"], correct: 0 },
+    { c: "Central Perk", q: "What is the name of the coffee shop where the gang hangs out?", a: ["Central Park Café", "The Coffee Bean", "Central Perk", "Perk Place"], correct: 2 },
+    { c: "Central Perk", q: "Who works as a waitress at Central Perk early in the series?", a: ["Monica", "Phoebe", "Janice", "Rachel"], correct: 3 },
+    { c: "Central Perk", q: "What is the name of the Central Perk manager who has a crush on Rachel?", a: ["Gunther", "Günter", "Gary", "Glen"], correct: 0 },
+    { c: "Phoebe", q: "What is the name of Phoebe's most famous song?", a: ["Stinky Dog", "Smelly Cat", "Grumpy Rat", "Sticky Shoe"], correct: 1 },
+    { c: "Phoebe", q: "What is Phoebe's twin sister's name?", a: ["Emma", "Amy", "Ursula", "Erica"], correct: 2 },
+    { c: "Phoebe", q: "What alias does Phoebe often use?", a: ["Regina Phalange", "Anita Hanjaab", "Monana", "Princess Consuela"], correct: 0 },
+    { c: "Ross", q: "What is Ross's profession?", a: ["Archaeologist", "Chemist", "Paleontologist", "Geologist"], correct: 2 },
+    { c: "Ross", q: "How many times does Ross get divorced?", a: ["Once", "Twice", "Three times", "Four times"], correct: 2 },
+    { c: "Ross", q: "What was the name of Ross's pet monkey?", a: ["Mario", "Marcel", "Milo", "Max"], correct: 1 },
+    { c: "Ross", q: "Whose name does Ross say at the altar in London?", a: ["Emily's", "Julie's", "Rachel's", "Carol's"], correct: 2 },
+    { c: "Joey", q: "What soap opera does Joey star in as Dr. Drake Ramoray?", a: ["General Hospital", "Days of Our Lives", "The Young and the Restless", "All My Children"], correct: 1 },
+    { c: "Joey", q: "What food does Joey refuse to share?", a: ["Pizza", "Sandwiches", "Food (any of it!)", "Meatballs"], correct: 2 },
+    { c: "Joey", q: "What is the name of Joey's stuffed penguin pal?", a: ["Waddles", "Pengu", "Hugsy", "Snowy"], correct: 2 },
+    { c: "Monica & Chandler", q: "What is Chandler Bing's middle name?", a: ["Marcel", "Muriel", "Maurice", "Milton"], correct: 1 },
+    { c: "Monica & Chandler", q: "Where do Monica and Chandler first hook up?", a: ["New York", "Las Vegas", "London", "Barbados"], correct: 2 },
+    { c: "Monica & Chandler", q: "How many categories of towels does Monica have?", a: ["7", "9", "11", "13"], correct: 2 },
+    { c: "Monica & Chandler", q: "What does Chandler's job actually involve? (Nobody could remember!)", a: ["Statistical analysis and data reconfiguration", "Transponster repair", "Actuarial accounting", "Systems administration"], correct: 0 },
+    { c: "Rachel", q: "What is the name of Ross and Rachel's daughter?", a: ["Ella", "Erica", "Emma", "Emily"], correct: 2 },
+    { c: "Rachel", q: "Which company does Rachel leave for a job offer in Paris?", a: ["Bloomingdale's", "Ralph Lauren", "Gucci", "Louis Vuitton"], correct: 1 },
+    { c: "Rachel", q: "What dessert does Rachel famously ruin at Thanksgiving?", a: ["Pumpkin pie", "English trifle", "Cheesecake", "Chocolate mousse"], correct: 1 },
+    { c: "Deep Cuts", q: "What is the name of the ugly naked guy's replacement... just kidding! Who takes over Ugly Naked Guy's apartment?", a: ["Joey", "Ross", "Gunther", "Janice"], correct: 1 },
+    { c: "Deep Cuts", q: "What game do the gang play where Rachel and Monica lose their apartment?", a: ["Poker", "A trivia quiz made by Ross", "Charades", "Cups"], correct: 1 },
+    { c: "Deep Cuts", q: "What is Monica's dad's nickname for her?", a: ["Little Harmonica", "Mon-Mon", "Cupcake", "Princess"], correct: 0 },
+    { c: "Deep Cuts", q: "What does Phoebe find in a can of soda?", a: ["A ring", "A thumb", "A tooth", "A key"], correct: 1 },
+    { c: "Deep Cuts", q: "What is the name of Joey and Chandler's pet chick and duck duo (as later named)?", a: ["Chick Jr. & Duck Jr.", "Yasmine & Dick", "Chickie & Ducky", "Peep & Quack"], correct: 0 },
+    { c: "Deep Cuts", q: "In which city was Emily from?", a: ["Manchester", "Liverpool", "London", "Leeds"], correct: 2 },
+  ];
+  
+  const GOOD_LINES = [
+    "Could you BE any more correct?",
+    "Joey doesn't share food, but he'd share that answer!",
+    "That answer is a lobster. 🦞",
+    "Seven! SEVEN! ...points of perfection!",
+    "You're the Monica of trivia — flawlessly organized!",
+    "Smelly Cat approves. 🎶",
+    "PIVOT-ally perfect!",
+    "Gunther would give you free coffee for that.",
+  ];
+  const BAD_LINES = [
+    "We were NOT on a break from studying, apparently...",
+    "Oh. My. God. — Janice, and also everyone watching.",
+    "That answer is going in Monica's 'to fix' pile.",
+    "Chandler would make a sarcastic joke right about now.",
+    "Marcel could've answered that one. 🐒",
+    "It's like a cow's opinion. It just doesn't matter. It's MOO.",
+  ];
+  const TIMEOUT_LINES = [
+    "Too slow! The couch got stuck on the stairs. PIVOT!",
+    "Time's up — you were on a (coffee) break!",
+    "Even Ross's slides moved faster than that.",
+  ];
+  
+  const QUESTIONS_PER_GAME = 10;
+  const TIME_PER_Q = 20;
+  
+  let deck = [], qIndex = 0, score = 0, lives = 3, streak = 0, bestStreak = 0;
+  let timeLeft = TIME_PER_Q, timerId = null, answered = false;
+  
+  const $ = id => document.getElementById(id);
+  
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  
+  function startGame() {
+    deck = shuffle(QUESTIONS).slice(0, QUESTIONS_PER_GAME);
+    qIndex = 0; score = 0; lives = 3; streak = 0; bestStreak = 0;
+    $('start').classList.add('hidden');
+    $('end').classList.add('hidden');
+    $('game').classList.remove('hidden');
+    renderQuestion();
+  }
+  
+  function renderHud() {
+    $('lives').innerHTML = [0,1,2].map(i => `<span class="${i < lives ? '' : 'lost'}">☕</span>`).join('');
+    $('qcount').textContent = `Q ${qIndex + 1}/${deck.length}`;
+    $('score').textContent = score;
+    $('streak').textContent = streak >= 2 ? `🔥 x${streak}` : '';
+  }
+  
+  function renderQuestion() {
+    answered = false;
+    const q = deck[qIndex];
+    renderHud();
+    $('category').textContent = q.c;
+    $('question').textContent = q.q;
+    $('question').classList.remove('pop'); void $('question').offsetWidth; $('question').classList.add('pop');
+    $('feedback').textContent = '';
+    $('feedback').className = 'feedback';
+  
+    // shuffle answer order but track the correct one
+    const order = shuffle(q.a.map((text, i) => ({ text, isCorrect: i === q.correct })));
+    const box = $('answers');
+    box.innerHTML = '';
+    order.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.textContent = opt.text;
+      btn.onclick = () => pick(btn, opt.isCorrect, order);
+      box.appendChild(btn);
+    });
+  
+    startTimer();
+  }
+  
+  function startTimer() {
+    clearInterval(timerId);
+    timeLeft = TIME_PER_Q;
+    updateTimerBar();
+    timerId = setInterval(() => {
+      timeLeft -= 0.1;
+      updateTimerBar();
+      if (timeLeft <= 0) {
+        clearInterval(timerId);
+        onTimeout();
+      }
+    }, 100);
+  }
+  
+  function updateTimerBar() {
+    const pct = Math.max(0, timeLeft / TIME_PER_Q * 100);
+    const fill = $('timerfill');
+    fill.style.width = pct + '%';
+    fill.classList.toggle('danger', pct < 25);
+  }
+  
+  function revealCorrect() {
+    [...$('answers').children].forEach(btn => {
+      btn.disabled = true;
+    });
+  }
+  
+  function pick(btn, isCorrect, order) {
+    if (answered) return;
+    answered = true;
+    clearInterval(timerId);
+    revealCorrect();
+  
+    if (isCorrect) {
+      btn.classList.add('correct');
+      streak++;
+      bestStreak = Math.max(bestStreak, streak);
+      const timeBonus = Math.round(timeLeft * 5);       // up to 100
+      const streakBonus = streak >= 2 ? streak * 10 : 0;
+      score += 100 + timeBonus + streakBonus;
+      $('feedback').textContent = GOOD_LINES[Math.floor(Math.random() * GOOD_LINES.length)] +
+        (streakBonus ? ` (+${100 + timeBonus} +${streakBonus} streak!)` : ` (+${100 + timeBonus})`);
+    } else {
+      btn.classList.add('wrong');
+      markCorrectButton(order);
+      loseLife(BAD_LINES[Math.floor(Math.random() * BAD_LINES.length)]);
+    }
+    renderHud();
+    setTimeout(nextQuestion, 1900);
+  }
+  
+  function markCorrectButton(order) {
+    [...$('answers').children].forEach((b, i) => {
+      if (order[i].isCorrect) b.classList.add('correct');
+    });
+  }
+  
+  function onTimeout() {
+    if (answered) return;
+    answered = true;
+    revealCorrect();
+    // highlight correct answer
+    const q = deck[qIndex];
+    [...$('answers').children].forEach(b => {
+      if (b.textContent === q.a[q.correct]) b.classList.add('correct');
+    });
+    loseLife(TIMEOUT_LINES[Math.floor(Math.random() * TIMEOUT_LINES.length)]);
+    renderHud();
+    setTimeout(nextQuestion, 1900);
+  }
+  
+  function loseLife(msg) {
+    lives--;
+    streak = 0;
+    $('feedback').textContent = msg;
+    $('feedback').classList.add('bad');
+    $('frame').classList.remove('shake'); void $('frame').offsetWidth; $('frame').classList.add('shake');
+  }
+  
+  function nextQuestion() {
+    qIndex++;
+    if (lives <= 0 || qIndex >= deck.length) {
+      endGame();
+    } else {
+      renderQuestion();
+    }
+  }
+  
+  function ratingFor(score, lives) {
+    if (lives <= 0) return { e: "🛋️💥", r: "The One Where You Ran Out of Coffee", q: "\"I'm not great at the advice. Can I interest you in a sarcastic comment?\" — Chandler" };
+    if (score >= 1200) return { e: "🏆", r: "You're basically Gunther — you've seen EVERYTHING.", q: "\"I'm Chandler. Could I BE wearing any more clothes?\" — Joey (flawlessly)" };
+    if (score >= 900) return { e: "🦞", r: "You're each other's lobster, you and this show.", q: "\"See? He's her lobster!\" — Phoebe" };
+    if (score >= 600) return { e: "☕", r: "Solid regular at Central Perk.", q: "\"Welcome to the real world. It sucks. You're gonna love it!\" — Monica" };
+    if (score >= 300) return { e: "🐒", r: "Marcel-level knowledge. Cute, but room to grow.", q: "\"It's a moo point.\" — Joey" };
+    return { e: "📺", r: "Time for a full 10-season rewatch!", q: "\"We were on a break!\" — Ross (and so was your memory)" };
+  }
+  
+  function endGame() {
+    clearInterval(timerId);
+    $('game').classList.add('hidden');
+    $('end').classList.remove('hidden');
+    $('finalScore').textContent = score;
+    const rt = ratingFor(score, lives);
+    $('endEmoji').textContent = rt.e;
+    $('rating').textContent = rt.r;
+    $('ratingQuote').textContent = rt.q;
+  
+    let best = 0;
+    try { best = Number(window.__friendsBest || 0); } catch (e) {}
+    if (score > best) { window.__friendsBest = score; best = score; }
+    $('best').textContent = `Session best: ${best} · Best streak this game: 🔥 x${bestStreak}`;
+  }
+  </script>
+  </body>
+  </html>
+  
