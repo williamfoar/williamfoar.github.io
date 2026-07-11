@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumen Residences — Modern Apartments</title>
+<style>
+  :root{
+    --bg:#0e0f12;
+    --surface:#16181d;
+    --surface-2:#1d2026;
+    --text:#f4f5f7;
+    --muted:#9aa0ab;
+    --accent:#c9a86a;
+    --accent-soft:rgba(201,168,106,.12);
+    --radius:18px;
+    --max:1180px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+
+  /* ---------- Nav ---------- */
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    backdrop-filter:blur(14px);
+    background:rgba(14,15,18,.72);
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  nav{display:flex;align-items:center;justify-content:space-between;height:72px}
+  .logo{font-size:1.25rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+  .logo span{color:var(--accent)}
+  .nav-links{display:flex;gap:36px;font-size:.9rem;color:var(--muted)}
+  .nav-links a{transition:color .2s}
+  .nav-links a:hover{color:var(--text)}
+  .btn{
+    display:inline-block;padding:12px 26px;border-radius:999px;
+    font-size:.9rem;font-weight:600;letter-spacing:.02em;
+    background:var(--accent);color:#141310;transition:transform .2s,box-shadow .2s;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(201,168,106,.3)}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.2)}
+  .btn.ghost:hover{border-color:var(--accent);box-shadow:none}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    min-height:100vh;display:flex;align-items:center;
+    background:
+      linear-gradient(180deg,rgba(14,15,18,.55) 0%,rgba(14,15,18,.35) 50%,var(--bg) 100%),
+      url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+  }
+  .hero-inner{padding:140px 0 80px}
+  .eyebrow{
+    display:inline-block;padding:6px 16px;border-radius:999px;
+    background:var(--accent-soft);color:var(--accent);
+    font-size:.78rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+    margin-bottom:24px;
+  }
+  h1{
+    font-size:clamp(2.6rem,6vw,4.6rem);line-height:1.08;font-weight:800;
+    letter-spacing:-.02em;max-width:14ch;
+  }
+  h1 em{font-style:normal;color:var(--accent)}
+  .hero p{max-width:52ch;margin:24px 0 36px;color:#cfd3da;font-size:1.1rem}
+  .hero-actions{display:flex;gap:16px;flex-wrap:wrap}
+  .hero-stats{display:flex;gap:48px;margin-top:64px;flex-wrap:wrap}
+  .stat b{display:block;font-size:1.9rem;font-weight:700;color:var(--accent)}
+  .stat span{font-size:.85rem;color:var(--muted)}
+
+  /* ---------- Sections ---------- */
+  section{padding:110px 0}
+  .section-head{max-width:640px;margin-bottom:56px}
+  .section-head .eyebrow{margin-bottom:16px}
+  h2{font-size:clamp(1.9rem,3.5vw,2.7rem);font-weight:700;letter-spacing:-.02em}
+  .section-head p{color:var(--muted);margin-top:14px}
+
+  /* ---------- Listings ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:28px}
+  .card{
+    background:var(--surface);border:1px solid rgba(255,255,255,.06);
+    border-radius:var(--radius);overflow:hidden;
+    transition:transform .25s,box-shadow .25s,border-color .25s;
+  }
+  .card:hover{transform:translateY(-6px);box-shadow:0 24px 50px rgba(0,0,0,.45);border-color:rgba(201,168,106,.35)}
+  .card-img{position:relative;aspect-ratio:4/3;overflow:hidden}
+  .card-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+  .card:hover .card-img img{transform:scale(1.06)}
+  .tag{
+    position:absolute;top:14px;left:14px;padding:5px 14px;border-radius:999px;
+    background:rgba(14,15,18,.8);backdrop-filter:blur(6px);
+    font-size:.75rem;font-weight:600;color:var(--accent);letter-spacing:.05em;
+  }
+  .card-body{padding:24px}
+  .card-body h3{font-size:1.2rem;font-weight:700;margin-bottom:4px}
+  .card-body .loc{font-size:.87rem;color:var(--muted)}
+  .specs{
+    display:flex;gap:18px;margin:16px 0;padding:14px 0;
+    border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);
+    font-size:.83rem;color:var(--muted);flex-wrap:wrap;
+  }
+  .card-foot{display:flex;align-items:center;justify-content:space-between}
+  .price{font-size:1.25rem;font-weight:700}
+  .price small{font-size:.8rem;font-weight:400;color:var(--muted)}
+  .link{font-size:.87rem;font-weight:600;color:var(--accent)}
+  .link:hover{text-decoration:underline}
+
+  /* ---------- Amenities ---------- */
+  .amenities{background:var(--surface)}
+  .am-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:24px}
+  .am{
+    background:var(--surface-2);border:1px solid rgba(255,255,255,.06);
+    border-radius:var(--radius);padding:30px;transition:border-color .25s;
+  }
+  .am:hover{border-color:rgba(201,168,106,.4)}
+  .am .icon{
+    width:52px;height:52px;border-radius:14px;display:grid;place-items:center;
+    background:var(--accent-soft);font-size:1.5rem;margin-bottom:18px;
+  }
+  .am h3{font-size:1.05rem;margin-bottom:6px}
+  .am p{font-size:.88rem;color:var(--muted)}
+
+  /* ---------- CTA / Contact ---------- */
+  .cta-box{
+    background:linear-gradient(135deg,var(--surface-2),var(--surface));
+    border:1px solid rgba(255,255,255,.08);border-radius:26px;
+    padding:64px 48px;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;
+  }
+  .cta-box h2{margin-bottom:14px}
+  .cta-box p{color:var(--muted)}
+  form{display:grid;gap:14px}
+  input,select{
+    width:100%;padding:14px 18px;border-radius:12px;
+    background:var(--bg);border:1px solid rgba(255,255,255,.12);
+    color:var(--text);font-size:.95rem;font-family:inherit;outline:none;
+    transition:border-color .2s;
+  }
+  input:focus,select:focus{border-color:var(--accent)}
+  input::placeholder{color:var(--muted)}
+  form .btn{border:none;cursor:pointer;width:100%}
+
+  /* ---------- Footer ---------- */
+  footer{border-top:1px solid rgba(255,255,255,.07);padding:40px 0;color:var(--muted);font-size:.85rem}
+  .foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:820px){
+    .nav-links{display:none}
+    .cta-box{grid-template-columns:1fr;padding:44px 28px}
+    section{padding:80px 0}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <nav>
+      <a class="logo" href="#top">Lumen<span>.</span></a>
+      <div class="nav-links">
+        <a href="#residences">Residences</a>
+        <a href="#amenities">Amenities</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <a class="btn" href="#contact">Book a Tour</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <div class="wrap hero-inner">
+    <span class="eyebrow">Now Leasing · Fall 2026</span>
+    <h1>Live above the <em>ordinary</em>.</h1>
+    <p>Thoughtfully designed apartments in the heart of the city — floor-to-ceiling light, curated amenities, and a community built around modern living.</p>
+    <div class="hero-actions">
+      <a class="btn" href="#residences">View Residences</a>
+      <a class="btn ghost" href="#contact">Schedule a Visit</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><b>240+</b><span>Residences</span></div>
+      <div class="stat"><b>18</b><span>Floors of skyline views</span></div>
+      <div class="stat"><b>4.9★</b><span>Resident rating</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="residences">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Residences</span>
+      <h2>Find the space that fits your life</h2>
+      <p>From efficient studios to expansive penthouses, every floor plan is designed with light, flow, and calm in mind.</p>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <div class="card-img">
+          <span class="tag">Available</span>
+          <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80" alt="Studio apartment with warm modern interior">
+        </div>
+        <div class="card-body">
+          <h3>The Aster — Studio</h3>
+          <div class="loc">Level 4–9 · East facing</div>
+          <div class="specs"><span>🛏 Studio</span><span>🛁 1 Bath</span><span>📐 48 m²</span></div>
+          <div class="card-foot">
+            <div class="price">$1,650<small> /mo</small></div>
+            <a class="link" href="#contact">View details →</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-img">
+          <span class="tag">Available</span>
+          <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=80" alt="Bright one-bedroom apartment living room">
+        </div>
+        <div class="card-body">
+          <h3>The Birch — 1 Bedroom</h3>
+          <div class="loc">Level 6–12 · Courtyard view</div>
+          <div class="specs"><span>🛏 1 Bed</span><span>🛁 1 Bath</span><span>📐 64 m²</span></div>
+          <div class="card-foot">
+            <div class="price">$2,150<small> /mo</small></div>
+            <a class="link" href="#contact">View details →</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-img">
+          <span class="tag">2 Left</span>
+          <img src="https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=900&q=80" alt="Spacious two-bedroom apartment with open kitchen">
+        </div>
+        <div class="card-body">
+          <h3>The Cedar — 2 Bedroom</h3>
+          <div class="loc">Level 10–15 · Corner unit</div>
+          <div class="specs"><span>🛏 2 Bed</span><span>🛁 2 Bath</span><span>📐 92 m²</span></div>
+          <div class="card-foot">
+            <div class="price">$3,200<small> /mo</small></div>
+            <a class="link" href="#contact">View details →</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-img">
+          <span class="tag">Penthouse</span>
+          <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80" alt="Luxury penthouse with skyline view">
+        </div>
+        <div class="card-body">
+          <h3>The Sequoia — Penthouse</h3>
+          <div class="loc">Level 17–18 · Private terrace</div>
+          <div class="specs"><span>🛏 3 Bed</span><span>🛁 3 Bath</span><span>📐 168 m²</span></div>
+          <div class="card-foot">
+            <div class="price">$6,800<small> /mo</small></div>
+            <a class="link" href="#contact">View details →</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-img">
+          <span class="tag">Available</span>
+          <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80" alt="Minimal modern apartment interior">
+        </div>
+        <div class="card-body">
+          <h3>The Willow — 1 Bedroom + Den</h3>
+          <div class="loc">Level 5–11 · West facing</div>
+          <div class="specs"><span>🛏 1+Den</span><span>🛁 1.5 Bath</span><span>📐 74 m²</span></div>
+          <div class="card-foot">
+            <div class="price">$2,450<small> /mo</small></div>
+            <a class="link" href="#contact">View details →</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-img">
+          <span class="tag">Coming Soon</span>
+          <img src="https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80" alt="Modern kitchen in apartment">
+        </div>
+        <div class="card-body">
+          <h3>The Maple — 2 Bedroom Loft</h3>
+          <div class="loc">Level 16 · Double-height ceilings</div>
+          <div class="specs"><span>🛏 2 Bed</span><span>🛁 2 Bath</span><span>📐 110 m²</span></div>
+          <div class="card-foot">
+            <div class="price">$3,900<small> /mo</small></div>
+            <a class="link" href="#contact">Join waitlist →</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="amenities" id="amenities">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Amenities</span>
+      <h2>Everything you need, steps from your door</h2>
+      <p>Over 2,000 m² of shared spaces designed for work, wellness, and winding down.</p>
+    </div>
+    <div class="am-grid">
+      <div class="am"><div class="icon">🏋️</div><h3>Fitness Studio</h3><p>24/7 gym with strength, cardio, and weekly yoga classes.</p></div>
+      <div class="am"><div class="icon">🏊</div><h3>Rooftop Pool</h3><p>Heated infinity pool with panoramic skyline views.</p></div>
+      <div class="am"><div class="icon">💻</div><h3>Co-Working Lounge</h3><p>Private booths, fast Wi-Fi, and free espresso on tap.</p></div>
+      <div class="am"><div class="icon">🌿</div><h3>Sky Garden</h3><p>Landscaped terrace with BBQ pavilions and fire pits.</p></div>
+      <div class="am"><div class="icon">🐾</div><h3>Pet Spa</h3><p>Grooming station and a fenced rooftop dog run.</p></div>
+      <div class="am"><div class="icon">🔒</div><h3>Smart Access</h3><p>Keyless entry, package lockers, and 24/7 concierge.</p></div>
+      <div class="am"><div class="icon">🚲</div><h3>Bike Hub</h3><p>Secure storage with repair tools and EV charging.</p></div>
+      <div class="am"><div class="icon">🎬</div><h3>Screening Room</h3><p>Private cinema and games lounge, bookable by residents.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="wrap">
+    <div class="cta-box">
+      <div>
+        <span class="eyebrow">Book a Tour</span>
+        <h2>See it in person. Fall in love in minutes.</h2>
+        <p>Tours run daily from 9am–7pm. Tell us what you're looking for and our leasing team will reach out within one business day.</p>
+      </div>
+      <form onsubmit="event.preventDefault(); this.innerHTML='<p style=&quot;color:var(--accent);font-weight:600&quot;>✓ Thanks! We\'ll be in touch shortly.</p>';">
+        <input type="text" placeholder="Full name" required>
+        <input type="email" placeholder="Email address" required>
+        <select required>
+          <option value="" disabled selected>Interested in…</option>
+          <option>Studio</option>
+          <option>1 Bedroom</option>
+          <option>2 Bedroom</option>
+          <option>Penthouse</option>
+        </select>
+        <button class="btn" type="submit">Request a Tour</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div class="logo">Lumen<span style="color:var(--accent)">.</span></div>
+    <div>128 Meridian Avenue · Downtown · (555) 012-3456</div>
+    <div>© 2026 Lumen Residences. All rights reserved.</div>
+  </div>
+</footer>
+
+</body>
+</html>
