@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- skill:chrome -->
+<style>
+/* Credit line — bottom-right */
+.design-ui-credit {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  font: 11px/1 system-ui, sans-serif;
+  color: rgba(128,128,128,0.5);
+  pointer-events: none;
+  z-index: 2147483647;
+  transition: opacity 0.4s ease;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* Hide chrome on touch devices */
+@media (hover: none) {
+  .design-ui-credit { display: none; }
+}
+
+/* Print fixes */
+@media print {
+  * {
+    transition: none !important;
+    animation: none !important;
+    box-shadow: none !important;
+  }
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .design-ui-credit { display: none !important; }
+}
+
+</style>
+<script>
+(function () {
+    // Design-ui pages are single compositions, so the whole body is editable.
+    function markEditable() {
+        document.body.classList.add('artifact-editable');
+    }
+
+    // Credit badge with idle-fade. Hover devices only.
+    function initChromeUI() {
+        if (!matchMedia('(hover: hover)').matches) return;
+
+        var credit = document.createElement('div');
+        credit.className = 'design-ui-credit';
+        credit.setAttribute('aria-hidden', 'true');
+        credit.innerHTML = '\u{1F49C} by ClickUp Brain';
+        document.body.appendChild(credit);
+
+        var timer = null;
+        var fade = function (out) { credit.style.opacity = out ? '0' : ''; };
+        fade(true);
+        var show = function () {
+            fade(false);
+            clearTimeout(timer);
+            timer = setTimeout(function () { fade(true); }, 3000);
+        };
+        document.addEventListener('mousemove', show);
+        show();
+    }
+
+    function init() {
+        markEditable();
+        initChromeUI();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+</script>
+<!-- /skill:chrome -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Molehill — Whack-a-Mole</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: oklch(97% 0.012 90);
+    --surface: oklch(99.2% 0.006 90);
+    --field: oklch(93% 0.03 145);
+    --field-2: oklch(88% 0.045 145);
+    --hole: oklch(38% 0.04 60);
+    --hole-rim: oklch(52% 0.05 60);
+    --ink: oklch(28% 0.03 60);
+    --muted: oklch(52% 0.02 70);
+    --accent: oklch(64% 0.18 30);
+    --accent-deep: oklch(55% 0.19 30);
+    --gold: oklch(80% 0.13 85);
+    --line: oklch(88% 0.02 80);
+    --shadow: 0 1px 2px oklch(30% 0.03 60 / 0.06), 0 8px 24px oklch(30% 0.03 60 / 0.08);
+    --shadow-lg: 0 2px 4px oklch(30% 0.03 60 / 0.08), 0 20px 50px oklch(30% 0.03 60 / 0.14);
+    --ease-quint: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+    --space: 4px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  body{
+    font-family:'Space Grotesk', system-ui, sans-serif;
+    background:
+      radial-gradient(1100px 500px at 50% -10%, oklch(94% 0.03 90), transparent),
+      var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 20px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .game{
+    width:100%;
+    max-width:620px;
+  }
+
+  /* ---- Header / scoreboard ---- */
+  .topbar{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    margin-bottom:28px;
+    gap:20px;
+  }
+  .title-block .eyebrow{
+    font-size:0.72rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .title-block h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:2.6rem;
+    line-height:0.95;
+    letter-spacing:-0.02em;
+    margin-top:4px;
+  }
+  .title-block h1 .dot{color:var(--accent)}
+
+  .stats{
+    display:flex;
+    gap:10px;
+  }
+  .stat{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px 16px 11px;
+    min-width:86px;
+    text-align:center;
+    box-shadow:var(--shadow);
+  }
+  .stat .label{
+    font-size:0.66rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .stat .value{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:1.7rem;
+    line-height:1;
+    margin-top:3px;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat.time .value{ color:var(--accent-deep) }
+  .stat.time.low .value{ animation:pulse 0.7s var(--ease-quint) infinite }
+  @keyframes pulse{50%{opacity:0.35}}
+
+  /* ---- Timer bar ---- */
+  .timerbar{
+    height:6px;
+    border-radius:999px;
+    background:var(--field-2);
+    overflow:hidden;
+    margin-bottom:20px;
+  }
+  .timerbar span{
+    display:block;
+    height:100%;
+    width:100%;
+    background:linear-gradient(90deg, var(--accent), var(--gold));
+    transform-origin:left;
+    transition:transform 1s linear;
+  }
+
+  /* ---- The field ---- */
+  .field{
+    position:relative;
+    background:
+      radial-gradient(120% 90% at 50% 0%, var(--field), var(--field-2));
+    border:1px solid oklch(80% 0.05 145);
+    border-radius:28px;
+    padding:38px 34px 42px;
+    box-shadow:var(--shadow-lg), inset 0 2px 0 oklch(99% 0.02 145 / 0.6);
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:26px 30px;
+  }
+
+  .hole{
+    position:relative;
+    aspect-ratio:1/0.82;
+    cursor:pointer;
+    border:0;
+    background:transparent;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+  }
+  /* the dirt opening */
+  .hole::before{
+    content:"";
+    position:absolute;
+    left:6%;
+    right:6%;
+    bottom:0;
+    height:46%;
+    border-radius:50%;
+    background:radial-gradient(120% 140% at 50% 15%, var(--hole-rim), var(--hole));
+    box-shadow:inset 0 8px 14px oklch(20% 0.03 60 / 0.55);
+  }
+  /* rim highlight */
+  .hole::after{
+    content:"";
+    position:absolute;
+    left:6%;
+    right:6%;
+    bottom:calc(46% - 5px);
+    height:14px;
+    border-radius:50%;
+    background:oklch(82% 0.04 130);
+    opacity:0.5;
+    filter:blur(1px);
+  }
+
+  .mole{
+    position:absolute;
+    left:50%;
+    bottom:6%;
+    width:64%;
+    transform:translate(-50%, 115%);
+    transition:transform 0.13s var(--ease-in);
+    z-index:2;
+    will-change:transform;
+  }
+  .hole.up .mole{
+    transform:translate(-50%, 0);
+    transition:transform 0.16s var(--ease-quint);
+  }
+  .hole.bonk .mole{
+    transform:translate(-50%, 118%) scale(0.9);
+    transition:transform 0.09s var(--ease-in);
+  }
+
+  .mole svg{display:block;width:100%;height:auto;filter:drop-shadow(0 6px 8px oklch(30% 0.05 60 / 0.28))}
+
+  /* clip moles behind the dirt rim */
+  .hole .clip{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:78%;
+    overflow:hidden;
+    border-radius:0 0 50% 50%/0 0 30% 30%;
+  }
+
+  .splat{
+    position:absolute;
+    left:50%; top:38%;
+    transform:translate(-50%,-50%) scale(0.4);
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:1.4rem;
+    color:var(--accent-deep);
+    opacity:0;
+    pointer-events:none;
+    z-index:3;
+  }
+  .splat.go{ animation:pop 0.5s var(--ease-quint) forwards }
+  @keyframes pop{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(0.4)}
+    30%{opacity:1;transform:translate(-50%,-90%) scale(1.1)}
+    100%{opacity:0;transform:translate(-50%,-150%) scale(1)}
+  }
+
+  /* ---- Overlay (start / end) ---- */
+  .overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:oklch(96% 0.02 90 / 0.72);
+    backdrop-filter:blur(6px);
+    border-radius:28px;
+    gap:6px;
+    z-index:5;
+    transition:opacity 0.3s var(--ease-quint);
+  }
+  .overlay.hide{opacity:0;pointer-events:none}
+  .overlay h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:2.1rem;
+    letter-spacing:-0.01em;
+  }
+  .overlay p{color:var(--muted);max-width:34ch;line-height:1.5;margin-bottom:8px}
+  .overlay .final{
+    font-family:'Fraunces',serif;
+    font-size:3.4rem;
+    font-weight:700;
+    color:var(--accent);
+    line-height:1;
+    margin:2px 0;
+    font-variant-numeric:tabular-nums;
+  }
+  .best-note{font-size:0.85rem;color:var(--muted)}
+
+  .btn{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:1rem;
+    color:oklch(99% 0.01 90);
+    background:var(--accent);
+    border:0;
+    border-radius:999px;
+    padding:14px 34px;
+    cursor:pointer;
+    margin-top:10px;
+    box-shadow:0 6px 16px oklch(55% 0.19 30 / 0.35);
+    transition:transform 0.15s var(--ease-quint), background 0.15s;
+  }
+  .btn:hover{background:var(--accent-deep);transform:translateY(-2px)}
+  .btn:active{transform:translateY(0)}
+  .btn:focus-visible{outline:3px solid var(--accent-deep);outline-offset:3px}
+
+  .hint{
+    margin-top:22px;
+    text-align:center;
+    color:var(--muted);
+    font-size:0.85rem;
+  }
+  .hint kbd{
+    font-family:'Space Grotesk',sans-serif;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-bottom-width:2px;
+    border-radius:6px;
+    padding:1px 7px;
+    font-size:0.78rem;
+    color:var(--ink);
+  }
+
+  @media(max-width:520px){
+    .title-block h1{font-size:2rem}
+    .topbar{flex-direction:column;align-items:stretch;gap:16px}
+    .stats{justify-content:space-between}
+    .stat{flex:1}
+    .field{padding:28px 20px 32px}
+    .grid{gap:18px 18px}
+  }
+</style>
+</head>
+<body>
+  <div class="game">
+    <div class="topbar">
+      <div class="title-block">
+        <div class="eyebrow">Reflex Arcade</div>
+        <h1>Molehill<span class="dot">.</span></h1>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="label">Score</div>
+          <div class="value" id="score">0</div>
+        </div>
+        <div class="stat time" id="timeStat">
+          <div class="label">Time</div>
+          <div class="value" id="time">30</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="timerbar"><span id="timerFill"></span></div>
+
+    <div class="field">
+      <div class="grid" id="grid"></div>
+
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">Ready?</h2>
+        <p id="ovText">Bonk the moles before they duck back down. You get 30 seconds. Miss a swing and you lose a point.</p>
+        <div class="final" id="ovFinal" style="display:none">0</div>
+        <div class="best-note" id="ovBest" style="display:none"></div>
+        <button class="btn" id="startBtn">Start game</button>
+      </div>
+    </div>
+
+    <p class="hint">Click a mole, or use keys <kbd>1</kbd>–<kbd>9</kbd> for the grid.</p>
+  </div>
+
+<script>
+(function(){
+  const HOLES = 9;
+  const ROUND = 30;
+  const grid = document.getElementById('grid');
+  const scoreEl = document.getElementById('score');
+  const timeEl = document.getElementById('time');
+  const timeStat = document.getElementById('timeStat');
+  const fill = document.getElementById('timerFill');
+  const overlay = document.getElementById('overlay');
+  const ovTitle = document.getElementById('ovTitle');
+  const ovText = document.getElementById('ovText');
+  const ovFinal = document.getElementById('ovFinal');
+  const ovBest = document.getElementById('ovBest');
+  const startBtn = document.getElementById('startBtn');
+
+  const moleSVG = `
+    <svg viewBox="0 0 100 92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <ellipse cx="50" cy="52" rx="34" ry="36" fill="oklch(56% 0.05 60)"/>
+      <ellipse cx="50" cy="60" rx="24" ry="24" fill="oklch(82% 0.045 55)"/>
+      <ellipse cx="34" cy="30" rx="9" ry="10" fill="oklch(56% 0.05 60)"/>
+      <ellipse cx="66" cy="30" rx="9" ry="10" fill="oklch(56% 0.05 60)"/>
+      <circle cx="40" cy="46" r="5.5" fill="oklch(22% 0.02 60)"/>
+      <circle cx="60" cy="46" r="5.5" fill="oklch(22% 0.02 60)"/>
+      <circle cx="41.6" cy="44.4" r="1.8" fill="oklch(98% 0 0)"/>
+      <circle cx="61.6" cy="44.4" r="1.8" fill="oklch(98% 0 0)"/>
+      <ellipse cx="50" cy="58" rx="6" ry="4.6" fill="oklch(64% 0.18 30)"/>
+      <path d="M44 66 q6 6 12 0" stroke="oklch(40% 0.03 60)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M30 58 l-14 -3 M30 63 l-15 2 M70 58 l14 -3 M70 63 l15 2"
+            stroke="oklch(70% 0.02 60)" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>`;
+
+  let holes = [];
+  let score = 0;
+  let timeLeft = ROUND;
+  let running = false;
+  let tickTimer = null;
+  let popTimer = null;
+  let best = Number(localStorage.getItem('molehill_best') || 0);
+
+  // build holes
+  for(let i=0;i<HOLES;i++){
+    const hole = document.createElement('button');
+    hole.className = 'hole';
+    hole.setAttribute('aria-label', 'Hole ' + (i+1));
+    hole.innerHTML = `<span class="clip"><span class="mole">${moleSVG}</span></span><span class="splat">+1</span>`;
+    hole.addEventListener('click', ()=>whack(i));
+    grid.appendChild(hole);
+    holes.push({el:hole, up:false});
+  }
+
+  function setScore(v){ score = v; scoreEl.textContent = v; }
+
+  function whack(i){
+    if(!running) return;
+    const h = holes[i];
+    if(h.up){
+      h.up = false;
+      h.el.classList.remove('up');
+      h.el.classList.add('bonk');
+      setTimeout(()=>h.el.classList.remove('bonk'), 120);
+      setScore(score + 1);
+      const splat = h.el.querySelector('.splat');
+      splat.textContent = '+1';
+      splat.classList.remove('go'); void splat.offsetWidth; splat.classList.add('go');
+    } else {
+      // swing and miss
+      setScore(Math.max(0, score - 1));
+      const splat = h.el.querySelector('.splat');
+      splat.textContent = 'miss';
+      splat.classList.remove('go'); void splat.offsetWidth; splat.classList.add('go');
+    }
+  }
+
+  function popRandom(){
+    // hide any currently up
+    holes.forEach(h=>{ if(h.up){ h.up=false; h.el.classList.remove('up'); }});
+    const idx = Math.floor(Math.random()*HOLES);
+    const h = holes[idx];
+    h.up = true;
+    h.el.classList.add('up');
+    // stays up between 550ms (late game) and 950ms (early)
+    const speed = Math.max(500, 950 - (ROUND - timeLeft) * 15);
+    const upFor = speed - Math.random()*180;
+    setTimeout(()=>{ if(h.up){ h.up=false; h.el.classList.remove('up'); } }, upFor);
+    // schedule next pop
+    const gap = Math.max(360, speed*0.7) - Math.random()*160;
+    popTimer = setTimeout(popRandom, gap);
+  }
+
+  function tick(){
+    timeLeft--;
+    timeEl.textContent = timeLeft;
+    fill.style.transform = `scaleX(${timeLeft/ROUND})`;
+    timeStat.classList.toggle('low', timeLeft <= 5);
+    if(timeLeft <= 0) end();
+  }
+
+  function start(){
+    setScore(0);
+    timeLeft = ROUND;
+    timeEl.textContent = timeLeft;
+    fill.style.transform = 'scaleX(1)';
+    timeStat.classList.remove('low');
+    running = true;
+    overlay.classList.add('hide');
+    ovFinal.style.display = 'none';
+    ovBest.style.display = 'none';
+    tickTimer = setInterval(tick, 1000);
+    popTimer = setTimeout(popRandom, 500);
+  }
+
+  function end(){
+    running = false;
+    clearInterval(tickTimer);
+    clearTimeout(popTimer);
+    holes.forEach(h=>{ h.up=false; h.el.classList.remove('up'); });
+
+    const isBest = score > best;
+    if(isBest){ best = score; localStorage.setItem('molehill_best', best); }
+
+    ovTitle.textContent = isBest ? 'New best!' : "Time's up";
+    ovText.textContent = isBest
+      ? 'You outbonked your previous record. Go again?'
+      : 'Nice swinging. Think you can beat it?';
+    ovFinal.textContent = score;
+    ovFinal.style.display = 'block';
+    ovBest.textContent = 'Best: ' + best;
+    ovBest.style.display = 'block';
+    startBtn.textContent = 'Play again';
+    overlay.classList.remove('hide');
+  }
+
+  startBtn.addEventListener('click', start);
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.key >= '1' && e.key <= '9'){ whack(Number(e.key)-1); }
+    if(e.key === ' ' && !running){ e.preventDefault(); start(); }
+  });
+})();
+</script>
+</body>
+</html>
